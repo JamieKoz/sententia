@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { DeckBuildingOverlay } from "./DeckBuildingOverlay";
 import { AvoidTonightPicker } from "./AvoidTonightPicker";
+import { OnboardingSummary } from "./OnboardingSummary";
 import { DiscoveryAudiencePicker, DiscoveryPopularityPicker } from "./DiscoveryStylePicker";
 import { LanguageMultiSelect } from "./LanguageMultiSelect";
 import { ReleaseTimeline } from "./ReleaseTimeline";
@@ -23,7 +24,8 @@ type OnboardingStep =
   | "audience"
   | "provider"
   | "avoid"
-  | "keywords";
+  | "keywords"
+  | "review";
 
 type TransitionDirection = "forward" | "back";
 
@@ -38,7 +40,8 @@ const STEP_ORDER: OnboardingStep[] = [
   "audience",
   "provider",
   "avoid",
-  "keywords"
+  "keywords",
+  "review"
 ];
 
 function stepIndex(step: OnboardingStep) {
@@ -188,6 +191,9 @@ export function QuestionsSection(props: {
     if (step === "welcome") {
       onBegin();
     }
+    if (step === "keywords") {
+      commitKeywords(keywordsDraft);
+    }
     const next = nextStep(step);
     if (next) goTo(next);
   }
@@ -212,7 +218,7 @@ export function QuestionsSection(props: {
   }
 
   const canAdvanceFromMood = (answers.moods?.length ?? 0) > 0;
-  const isLastStep = step === "keywords";
+  const isLastStep = step === "review";
 
   const stepNav = (
     <div className="onboarding-nav flex items-center justify-center gap-3">
@@ -449,12 +455,25 @@ export function QuestionsSection(props: {
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
                       event.preventDefault();
-                      handleStart();
+                      commitKeywords(keywordsDraft);
+                      goNext();
                     }
                   }}
                   placeholder="Black and white, Slasher, Feel-good"
                 />
               </div>
+            </StepFrame>
+          ) : null}
+
+          {step === "review" ? (
+            <StepFrame
+              step="review"
+              direction={direction}
+              title="Your picks"
+              subtitle="Everything looks good? We'll build your deck from this."
+              footer={stepNav}
+            >
+              <OnboardingSummary answers={answers} />
             </StepFrame>
           ) : null}
         </div>

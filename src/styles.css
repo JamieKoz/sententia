@@ -357,6 +357,187 @@ body {
   flex-shrink: 0;
 }
 
+.release-timeline {
+  width: 100%;
+  max-width: 36rem;
+  margin: 0 auto;
+}
+
+.release-timeline__any {
+  display: block;
+  width: 100%;
+  margin-bottom: 1.25rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(24, 24, 27, 0.72);
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #e4e4e7;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.release-timeline__any:hover:not(.release-timeline__any--selected) {
+  border-color: rgba(167, 139, 250, 0.55);
+  background: linear-gradient(145deg, rgba(91, 33, 182, 0.24), rgba(24, 24, 27, 0.92));
+  box-shadow: 0 8px 24px rgba(91, 33, 182, 0.18);
+}
+
+.release-timeline__any--selected {
+  border-color: rgba(196, 181, 253, 0.75);
+  background: linear-gradient(145deg, rgba(91, 33, 182, 0.42), rgba(24, 24, 27, 0.88));
+  box-shadow: 0 12px 36px rgba(91, 33, 182, 0.28);
+}
+
+.release-timeline__track {
+  position: relative;
+  display: flex;
+  width: 100%;
+  padding-top: 0.25rem;
+}
+
+.release-timeline__rail {
+  position: absolute;
+  top: 0.95rem;
+  left: 12.5%;
+  right: 12.5%;
+  height: 3px;
+  border-radius: 9999px;
+  background: rgba(63, 63, 70, 0.85);
+  overflow: hidden;
+}
+
+.release-timeline__rail-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.85), rgba(217, 70, 239, 0.75));
+  transition:
+    left 0.25s ease,
+    width 0.25s ease;
+}
+
+.release-timeline__rail-fill--any {
+  opacity: 0.35;
+}
+
+.release-timeline__rail-fill--custom {
+  background: linear-gradient(90deg, rgba(167, 139, 250, 0.95), rgba(192, 132, 252, 0.9));
+}
+
+.release-timeline__segment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.15rem 0.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 1;
+  transition: transform 0.2s ease;
+}
+
+.release-timeline__segment:hover:not(.release-timeline__segment--selected) {
+  transform: translateY(-2px);
+}
+
+.release-timeline__segment:hover:not(.release-timeline__segment--selected) .release-timeline__dot {
+  border-color: rgba(167, 139, 250, 0.7);
+  background: rgba(91, 33, 182, 0.35);
+}
+
+.release-timeline__segment--selected .release-timeline__dot {
+  border-color: rgba(221, 214, 254, 0.95);
+  background: linear-gradient(145deg, #8b5cf6, #d946ef);
+  box-shadow: 0 0 14px rgba(139, 92, 246, 0.65);
+}
+
+.release-timeline__segment--selected .release-timeline__label {
+  color: #f5f3ff;
+}
+
+.release-timeline__dot {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 9999px;
+  border: 2px solid rgba(161, 161, 170, 0.9);
+  background: rgba(24, 24, 27, 0.95);
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.release-timeline__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #d4d4d8;
+  line-height: 1.2;
+}
+
+.release-timeline__hint {
+  font-size: 0.68rem;
+  color: #71717a;
+  line-height: 1.2;
+}
+
+.release-timeline__bounds {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.35rem;
+  padding: 0 0.25rem;
+  font-size: 0.65rem;
+  color: #52525b;
+}
+
+.release-timeline__custom-toggle {
+  display: block;
+  width: 100%;
+  margin-top: 1.1rem;
+  border-radius: 0.75rem;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  background: transparent;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.85rem;
+  color: #a1a1aa;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.release-timeline__custom-toggle:hover {
+  border-color: rgba(167, 139, 250, 0.5);
+  color: #e4e4e7;
+  background: rgba(91, 33, 182, 0.12);
+}
+
+.release-timeline__custom-toggle--active {
+  border-style: solid;
+  border-color: rgba(196, 181, 253, 0.65);
+  color: #f5f3ff;
+  background: rgba(91, 33, 182, 0.2);
+}
+
+.release-timeline__custom-panel {
+  margin-top: 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(24, 24, 27, 0.55);
+  padding: 0.85rem 1rem;
+  text-align: center;
+}
+
+.release-timeline__custom-label {
+  font-size: 0.8rem;
+  color: #a1a1aa;
+}
+
 .onboarding-reveal {
   animation: onboarding-reveal 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -510,6 +691,10 @@ body {
   }
 
   .onboarding-provider-card:hover:not(.onboarding-provider-card--selected) {
+    transform: none;
+  }
+
+  .release-timeline__segment:hover:not(.release-timeline__segment--selected) {
     transform: none;
   }
 

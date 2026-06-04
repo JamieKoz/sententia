@@ -90,6 +90,18 @@ export function normalizeProviderList(raw?: string[]): string[] {
 export const LANGUAGE_OPTIONS = ["any", "en", "es", "fr", "ko", "ja"];
 export const EXCLUSION_OPTIONS = ["Horror", "Crime", "Romance", "Drama", "Action", "Thriller", "Comedy"];
 export const RELEASE_WINDOW_OPTIONS = ["any", "2020s", "2010s", "2000s", "pre-2000"] as const;
+
+/** Chronological order (oldest → newest) for the release step timeline. */
+export const RELEASE_TIMELINE_SEGMENTS: {
+  value: (typeof RELEASE_WINDOW_OPTIONS)[number];
+  label: string;
+  hint: string;
+}[] = [
+  { value: "pre-2000", label: "Pre-2000", hint: "1999 & earlier" },
+  { value: "2000s", label: "2000s", hint: "2000–09" },
+  { value: "2010s", label: "2010s", hint: "2010–19" },
+  { value: "2020s", label: "2020+", hint: "2020–now" }
+];
 export const FAMILIARITY_OPTIONS = ["any", "popular", "hidden-gems", "for-kids"] as const;
 export const YEAR_MIN = 1900;
 export const YEAR_MAX = new Date().getFullYear();

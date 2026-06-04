@@ -1,16 +1,14 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { DeckBuildingOverlay } from "./DeckBuildingOverlay";
+import { ReleaseTimeline } from "./ReleaseTimeline";
 import {
   EXCLUSION_OPTIONS,
   FAMILIARITY_OPTIONS,
   LANGUAGE_OPTIONS,
   MOOD_CHIPS,
   PROVIDER_OPTIONS,
-  RELEASE_WINDOW_OPTIONS,
   RUNTIME_OPTIONS,
-  TYPE_OPTIONS,
-  YEAR_MAX,
-  YEAR_MIN
+  TYPE_OPTIONS
 } from "../config/options";
 import type { OnboardingAnswers } from "../types";
 
@@ -359,71 +357,15 @@ export function QuestionsSection(props: {
 
           {step === "release" ? (
             <StepFrame step="release" direction={direction} title="Release date" subtitle="When should it have come out?" footer={stepNav}>
-              <div className="mx-auto w-full max-w-2xl">
-                <ChipGroup>
-                  {RELEASE_WINDOW_OPTIONS.map((window) => {
-                    const selected = (answers.releaseWindow ?? "any") === window && !answers.customYearRange;
-                    return (
-                      <OptionChip
-                        key={window}
-                        selected={selected}
-                        onClick={() => onUpdateAnswers({ releaseWindow: window, customYearRange: null })}
-                      >
-                        {window === "any"
-                          ? "Any"
-                          : window === "2020s"
-                            ? "2020+"
-                            : window === "2010s"
-                              ? "2010-2019"
-                              : window === "2000s"
-                                ? "2000-2009"
-                                : "Before 2000"}
-                      </OptionChip>
-                    );
-                  })}
-                  <OptionChip selected={Boolean(answers.customYearRange)} onClick={onToggleCustomYearRange}>
-                    Custom range
-                  </OptionChip>
-                </ChipGroup>
-                {customYearRange ? (
-                  <div className="mt-4 rounded-xl border border-white/20 bg-zinc-900/45 p-3 text-left">
-                    <p className="text-xs text-zinc-300">
-                      Year range: <span className="font-medium text-zinc-100">{customYearRange.min}</span> -{" "}
-                      <span className="font-medium text-zinc-100">{customYearRange.max}</span>
-                    </p>
-                    <div className="relative mt-3 h-8">
-                      <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-zinc-700/70" />
-                      <div
-                        className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-violet-400/80"
-                        style={{
-                          left: `${customYearStartPct}%`,
-                          right: `${100 - customYearEndPct}%`
-                        }}
-                      />
-                      <input
-                        className="dual-range dual-range-min absolute inset-0 w-full"
-                        type="range"
-                        min={YEAR_MIN}
-                        max={YEAR_MAX}
-                        value={customYearRange.min}
-                        onChange={(event) => onUpdateCustomYearRange({ min: Number(event.target.value) })}
-                      />
-                      <input
-                        className="dual-range dual-range-max absolute inset-0 w-full"
-                        type="range"
-                        min={YEAR_MIN}
-                        max={YEAR_MAX}
-                        value={customYearRange.max}
-                        onChange={(event) => onUpdateCustomYearRange({ max: Number(event.target.value) })}
-                      />
-                    </div>
-                    <div className="mt-1 flex justify-between text-[11px] text-zinc-400">
-                      <span>{YEAR_MIN}</span>
-                      <span>{YEAR_MAX}</span>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
+              <ReleaseTimeline
+                releaseWindow={answers.releaseWindow ?? "any"}
+                customYearRange={customYearRange}
+                customYearStartPct={customYearStartPct}
+                customYearEndPct={customYearEndPct}
+                onSelectWindow={(window) => onUpdateAnswers({ releaseWindow: window, customYearRange: null })}
+                onToggleCustomYearRange={onToggleCustomYearRange}
+                onUpdateCustomYearRange={onUpdateCustomYearRange}
+              />
             </StepFrame>
           ) : null}
 

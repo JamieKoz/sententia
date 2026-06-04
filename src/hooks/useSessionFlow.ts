@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { prepareSwipeCandidatePool } from "../engine/candidateFilters";
+import { passesCandidateConstraints, prepareSwipeCandidatePool } from "../engine/candidateFilters";
 import { applyDecisionSignal, applyKeepSignal, applyPassSignal, createDefaultProfile } from "../engine/profile";
 import { rankTitles } from "../engine/scoring";
 import type { AiHistoryHints } from "../services/ai";
@@ -86,7 +86,13 @@ export function useSessionFlow(params: {
 
         if (generated.length > 0) {
           if (tmdbEnabled) {
-            deckTitles = await resolveAiSuggestionsToTitles(generated, session.answers, profile, 10);
+            deckTitles = await resolveAiSuggestionsToTitles(
+              generated,
+              session.answers,
+              profile,
+              10,
+              watchRegion
+            );
           } else {
             deckTitles = generated.map((item, index) => ({
               id: `ai-${index}-${slugify(item.name)}`,
@@ -119,10 +125,15 @@ export function useSessionFlow(params: {
           historyHints: buildHistoryHints()
         });
         const baseDeckTitles = (reranked.length ? reranked : top20).slice(0, 10);
-        deckTitles = tmdbEnabled ? await enrichTitlesWithTmdb(baseDeckTitles) : baseDeckTitles;
+        deckTitles = tmdbEnabled
+          ? await enrichTitlesWithTmdb(baseDeckTitles, watchRegion)
+          : baseDeckTitles;
       }
 
-      if (deckTitles.length > 0) setCatalog((prev) => mergeCatalog(prev, deckTitles));
+      if (deckTitles.length > 0) {
+        deckTitles = deckTitles.filter((title) => passesCandidateConstraints(title, session.answers));
+        setCatalog((prev) => mergeCatalog(prev, deckTitles));
+      }
 
       const catalogForDeck = deckTitles.length > 0 ? mergeCatalog(catalog, deckTitles) : catalog;
       const primaryIds = deckTitles.map((title) => title.id);

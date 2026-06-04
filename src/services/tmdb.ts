@@ -1,7 +1,10 @@
-import { passesAiDeckConstraints } from "../engine/candidateFilters";
+import { passesAiDeckConstraints, passesCandidateConstraints } from "../engine/candidateFilters";
 import type { OnboardingAnswers, TasteProfile, Title, TitleType } from "../types";
 import { slugify } from "../utils/appState";
 import type { AiSuggestedTitle } from "./aiTypes";
+import { mapTmdbProvidersToCanonical, resolveTitleProviders } from "./tmdbProviderMap";
+import { tmdbWatchRegion } from "../config/regions";
+import { fetchWatchProvidersForTmdbId, parseTmdbCatalogId } from "./tmdbWatchProviders";
 
 export function tmdbPosterUrl(posterPath: string | null | undefined, size: "w342" | "w500" = "w500"): string | null {
   if (!posterPath) return null;
@@ -37,33 +40,64 @@ export async function searchTmdbTitle(query: string): Promise<TmdbSearchResult[]
   return data.results ?? [];
 }
 
-export async function enrichTitlesWithTmdb(titles: Title[]): Promise<Title[]> {
+export async function enrichTitlesWithTmdb(titles: Title[], watchRegion: string): Promise<Title[]> {
   if (titles.length === 0) return titles;
   const genreLookup = await getGenreLookup();
 
   const enriched = await Promise.all(
     titles.map(async (title) => {
+      const parsed = parseTmdbCatalogId(title.id);
+      let mediaType: "movie" | "tv" | undefined = parsed?.mediaType;
+      let tmdbId = parsed?.tmdbId;
+
       const results = await searchTmdbTitle(title.name);
       const best = findBestMatch(results, title);
-      if (!best) return title;
 
-      const year = parseYear(best.release_date ?? best.first_air_date);
-      const details = await fetchTmdbDetails(best.media_type, best.id);
-      const genresFromSearch = (best.genre_ids ?? []).map((id) => genreLookup.get(id)).filter((name): name is string => Boolean(name));
-      const genres = details?.genres?.length ? details.genres : genresFromSearch;
-      const cast = details?.cast?.length ? details.cast : undefined;
-      const rating = details?.voteAverage ?? best.vote_average ?? title.rating;
+      if (!mediaType || tmdbId === undefined) {
+        if (best?.media_type === "movie" || best?.media_type === "tv") {
+          mediaType = best.media_type;
+          tmdbId = best.id;
+        }
+      }
+
+      if (!best && !parsed) return title;
+
+      const year = best
+        ? parseYear(best.release_date ?? best.first_air_date) ?? title.releaseYear
+        : title.releaseYear;
+      const details =
+        mediaType && tmdbId !== undefined
+          ? await fetchTmdbDetails(mediaType, tmdbId, watchRegion)
+          : null;
+      const genresFromSearch = best
+        ? (best.genre_ids ?? []).map((id) => genreLookup.get(id)).filter((name): name is string => Boolean(name))
+        : [];
+      const genres = details?.genres?.length ? details.genres : genresFromSearch.length ? genresFromSearch : title.genres;
+      const cast = details?.cast?.length ? details.cast : title.cast;
+      const rating = details?.voteAverage ?? best?.vote_average ?? title.rating;
       const runtimeMinutes = details?.runtimeMinutes ?? title.runtimeMinutes;
+      const regionalProviders =
+        details?.providers ??
+        (mediaType && tmdbId !== undefined
+          ? await fetchWatchProvidersForTmdbId(mediaType, tmdbId, watchRegion)
+          : []);
 
       return {
         ...title,
-        posterPath: details?.posterPath ?? best.poster_path ?? title.posterPath,
-        overview: details?.overview?.trim() || best.overview?.trim() || title.overview,
+        id:
+          mediaType && tmdbId !== undefined ? `tmdb-${mediaType}-${tmdbId}` : title.id,
+        posterPath: details?.posterPath ?? best?.poster_path ?? title.posterPath,
+        overview: details?.overview?.trim() || best?.overview?.trim() || title.overview,
         releaseYear: year ?? title.releaseYear,
         genres: genres.length ? genres : title.genres,
         cast,
         rating,
-        runtimeMinutes
+        runtimeMinutes,
+        providers: resolveTitleProviders(
+          regionalProviders,
+          title.providers,
+          Boolean(mediaType && tmdbId !== undefined)
+        )
       };
     })
   );
@@ -106,7 +140,8 @@ export async function resolveAiSuggestionsToTitles(
   suggestions: AiSuggestedTitle[],
   answers: OnboardingAnswers,
   profile: TasteProfile,
-  max: number
+  max: number,
+  watchRegion: string
 ): Promise<Title[]> {
   if (suggestions.length === 0) return [];
   const genreLookup = await getGenreLookup();
@@ -124,8 +159,10 @@ export async function resolveAiSuggestionsToTitles(
       const media = match.media_type;
       const id = `tmdb-${media}-${match.id}`;
       if (!used.has(id) && !profile.rejectedIds.includes(id) && !profile.seenIds.includes(id)) {
-        const details = await fetchTmdbDetails(media, match.id);
+        const details = await fetchTmdbDetails(media, match.id, watchRegion);
         const year = parseYear(match.release_date ?? match.first_air_date);
+        const regionalProviders =
+          details?.providers ?? (await fetchWatchProvidersForTmdbId(media, match.id, watchRegion));
         const genresFromSearch = (match.genre_ids ?? []).map((gid) => genreLookup.get(gid)).filter((name): name is string => Boolean(name));
         const genres = details?.genres?.length ? details.genres : genresFromSearch;
         const resolvedType: TitleType = media === "tv" ? "series" : "movie";
@@ -140,7 +177,7 @@ export async function resolveAiSuggestionsToTitles(
           genres: genres.length ? genres : [],
           moods: [...(answers.moods ?? [])],
           language: answers.languages?.[0] ?? "en",
-          providers: [...(answers.providers ?? [])],
+          providers: resolveTitleProviders(regionalProviders, answers.providers ?? [], true),
           popularity: typeof match.vote_average === "number" ? Math.min(1, match.vote_average / 10) : 0.55,
           releaseYear: year ?? new Date().getFullYear(),
           posterPath: details?.posterPath ?? match.poster_path ?? null,
@@ -178,7 +215,9 @@ export async function resolveAiSuggestionsToTitles(
     }
   }
 
-  return resolved;
+  return resolved.filter(
+    (title) => passesAiDeckConstraints(title, answers) && passesCandidateConstraints(title, answers)
+  );
 }
 
 function findBestMatch(results: TmdbSearchResult[], title: Title): TmdbSearchResult | null {
@@ -227,15 +266,26 @@ interface TmdbDetailSummary {
   cast?: string[];
   voteAverage?: number;
   runtimeMinutes?: number;
+  providers?: string[];
+}
+
+interface TmdbWatchProvidersAppend {
+  results?: Record<string, { flatrate?: Array<{ provider_id: number; provider_name: string }> }>;
+}
+
+interface TmdbDetailResponseWithProviders extends TmdbDetailResponse {
+  "watch/providers"?: TmdbWatchProvidersAppend;
 }
 
 async function fetchTmdbDetails(
   mediaType: "movie" | "tv" | "person" | undefined,
-  id: number
+  id: number,
+  watchRegion?: string
 ): Promise<TmdbDetailSummary | null> {
   if (mediaType !== "movie" && mediaType !== "tv") return null;
 
-  const response = await fetch(`${API_BASE}/${mediaType}/${id}?append_to_response=credits`, {
+  const append = watchRegion ? "credits,watch/providers" : "credits";
+  const response = await fetch(`${API_BASE}/${mediaType}/${id}?append_to_response=${append}`, {
     headers: {
       accept: "application/json"
     }
@@ -243,7 +293,7 @@ async function fetchTmdbDetails(
 
   if (!response.ok) return null;
 
-  const data = (await response.json()) as TmdbDetailResponse;
+  const data = (await response.json()) as TmdbDetailResponseWithProviders;
   const genres = (data.genres ?? []).map((genre) => genre.name).filter(Boolean);
   const cast = (data.credits?.cast ?? [])
     .map((entry) => entry.name?.trim())
@@ -256,13 +306,23 @@ async function fetchTmdbDetails(
       ? data.episode_run_time[0]
       : undefined;
 
+  let providers: string[] | undefined;
+  if (watchRegion) {
+    const region = tmdbWatchRegion(watchRegion);
+    const bucket = data["watch/providers"]?.results?.[region];
+    if (bucket?.flatrate?.length) {
+      providers = mapTmdbProvidersToCanonical(bucket.flatrate);
+    }
+  }
+
   return {
     overview: data.overview,
     posterPath: data.poster_path ?? null,
     genres,
     cast: cast.length ? cast : undefined,
     voteAverage: data.vote_average,
-    runtimeMinutes
+    runtimeMinutes,
+    providers
   };
 }
 

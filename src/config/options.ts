@@ -73,6 +73,12 @@ const LEGACY_PROVIDER_IDS: Record<string, string> = {
   "disney+": "disney"
 };
 
+export function formatProviderLabels(providerIds: string[]): string {
+  return providerIds
+    .map((id) => PROVIDER_OPTIONS.find((item) => item.id === id)?.label ?? id)
+    .join(", ");
+}
+
 export function normalizeProviderList(raw?: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];

@@ -1,3 +1,4 @@
+import { formatProviderLabels } from "../config/options";
 import { tmdbPosterUrl } from "../services/tmdb";
 import type { Title } from "../types";
 
@@ -66,6 +67,11 @@ export function TitleCard({
         <p className={compactMobile ? "mt-1 text-xs sm:text-sm text-zinc-300" : "mt-2 text-sm text-zinc-300"}>
           Genres: {title.genres.join(", ")}
         </p>
+        {title.providers.length ? (
+          <p className={compactMobile ? "mt-1 text-xs sm:text-sm text-zinc-300" : "mt-1 text-sm text-zinc-300"}>
+            Streaming: {formatProviderLabels(title.providers)}
+          </p>
+        ) : null}
         {title.cast?.length ? (
           <p className={compactMobile ? "mt-1 text-xs sm:text-sm text-zinc-300" : "mt-1 text-sm text-zinc-300"}>
             Cast: {title.cast.join(", ")}

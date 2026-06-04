@@ -8,15 +8,22 @@ const STATUS_LINES = [
   "Almost ready to swipe…"
 ];
 
-export function DeckBuildingOverlay() {
+export function DeckBuildingOverlay({
+  error,
+  onDismiss
+}: {
+  error?: string | null;
+  onDismiss?: () => void;
+}) {
   const [lineIndex, setLineIndex] = useState(0);
 
   useEffect(() => {
+    if (error) return;
     const id = window.setInterval(() => {
       setLineIndex((i) => (i + 1) % STATUS_LINES.length);
     }, 2400);
     return () => window.clearInterval(id);
-  }, []);
+  }, [error]);
 
   return (
     <div
@@ -44,10 +51,28 @@ export function DeckBuildingOverlay() {
       </div>
 
       <div className="max-w-sm text-center">
-        <p className="text-base font-medium text-zinc-100 sm:text-lg">Building your deck</p>
-        <p className="mt-2 min-h-[3rem] text-sm text-zinc-300 sm:min-h-[2.75rem]" key={lineIndex}>
-          {STATUS_LINES[lineIndex]}
-        </p>
+        {error ? (
+          <>
+            <p className="text-base font-medium text-rose-100 sm:text-lg">Could not build your deck</p>
+            <p className="mt-2 text-sm text-zinc-300">{error}</p>
+            {onDismiss ? (
+              <button
+                type="button"
+                className="mt-6 rounded-full border border-white/30 bg-zinc-900/70 px-5 py-2 text-sm text-zinc-100 transition hover:border-white/50"
+                onClick={onDismiss}
+              >
+                Back
+              </button>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <p className="text-base font-medium text-zinc-100 sm:text-lg">Building your deck</p>
+            <p className="mt-2 min-h-[3rem] text-sm text-zinc-300 sm:min-h-[2.75rem]" key={lineIndex}>
+              {STATUS_LINES[lineIndex]}
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

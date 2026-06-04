@@ -12,6 +12,7 @@ import { useQuickSetup } from "./hooks/useQuickSetup";
 import { useShareCurrentTitle } from "./hooks/useShareCurrentTitle";
 import { useSessionFlow } from "./hooks/useSessionFlow";
 import { useSwipeGesture } from "./hooks/useSwipeGesture";
+import { loadBackendConfig } from "./services/backendConfig";
 import { loadLastAnswers, loadProfile, resetPersonalization, saveProfile } from "./services/storage";
 import { createInitialAnswers, createSession, nextPair } from "./state/machine";
 import type { SessionState, Title } from "./types";
@@ -61,6 +62,8 @@ export function App() {
 
   const {
     isBuildingDeck,
+    deckBuildError,
+    clearDeckBuildError,
     canUndo,
     startSwipeRound,
     handleSwipe,
@@ -102,6 +105,11 @@ export function App() {
     undoSwipeSessionState();
     resetSwipeGesture();
   }
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    void loadBackendConfig();
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -164,6 +172,8 @@ export function App() {
           <QuestionsSection
             answers={session.answers}
             isBuildingDeck={isBuildingDeck}
+            deckBuildError={deckBuildError}
+            onDismissDeckBuildError={clearDeckBuildError}
             customYearStartPct={customYearStartPct}
             customYearEndPct={customYearEndPct}
             onBegin={beginOnboarding}

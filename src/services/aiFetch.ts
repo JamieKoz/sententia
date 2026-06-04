@@ -1,3 +1,6 @@
+import { throwIfApiGateError, isOpenAiCompletionsUrl } from "./apiErrors";
+import { getTurnstileToken, isTurnstileConfigured } from "./turnstile";
+
 const DEFAULT_TIMEOUT_MS = 28_000;
 const DEFAULT_RETRIES = 2;
 const DEFAULT_RETRY_BASE_MS = 400;
@@ -27,8 +30,11 @@ export async function fetchWithTimeoutAndRetries(
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const response = await fetch(url, { ...init, signal: controller.signal });
+      const requestInit = await withOpenAiGateHeaders(url, init);
+      const response = await fetch(url, { ...requestInit, signal: controller.signal });
       clearTimeout(timer);
+
+      await throwIfApiGateError(response);
 
       if (response.ok) return response;
       if (response.status >= 400 && response.status < 500) return response;
@@ -45,4 +51,13 @@ export async function fetchWithTimeoutAndRetries(
   }
 
   throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+
+async function withOpenAiGateHeaders(url: string, init: RequestInit): Promise<RequestInit> {
+  if (!isOpenAiCompletionsUrl(url) || !isTurnstileConfigured()) return init;
+
+  const token = await getTurnstileToken();
+  const headers = new Headers(init.headers ?? {});
+  headers.set("X-Turnstile-Token", token);
+  return { ...init, headers };
 }

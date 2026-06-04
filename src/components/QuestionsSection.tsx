@@ -145,6 +145,8 @@ function NavButton({
 export function QuestionsSection(props: {
   answers: OnboardingAnswers;
   isBuildingDeck: boolean;
+  deckBuildError?: string | null;
+  onDismissDeckBuildError?: () => void;
   customYearStartPct: number;
   customYearEndPct: number;
   onBegin: () => void;
@@ -160,6 +162,8 @@ export function QuestionsSection(props: {
   const {
     answers,
     isBuildingDeck,
+    deckBuildError,
+    onDismissDeckBuildError,
     customYearStartPct,
     customYearEndPct,
     onBegin,
@@ -479,7 +483,9 @@ export function QuestionsSection(props: {
         </div>
       </div>
 
-      {isBuildingDeck ? <DeckBuildingOverlay /> : null}
+      {isBuildingDeck || deckBuildError ? (
+        <DeckBuildingOverlay error={deckBuildError} onDismiss={onDismissDeckBuildError} />
+      ) : null}
     </>
   );
 }

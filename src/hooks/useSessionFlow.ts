@@ -5,6 +5,7 @@ import { rankTitles } from "../engine/scoring";
 import type { AiHistoryHints } from "../services/ai";
 import { generateSuggestionsWithAi, rerankCandidatesWithAi } from "../services/ai";
 import { saveLastAnswers } from "../services/storage";
+import { apiGateUserMessage } from "../services/apiErrors";
 import { loadBackendConfig } from "../services/backendConfig";
 import { enrichTitlesWithTmdb, resolveAiSuggestionsToTitles } from "../services/tmdb";
 import { buildDeck, createSession, fillDeckFromSources } from "../state/machine";
@@ -37,6 +38,7 @@ export function useSessionFlow(params: {
   } = params;
 
   const [isBuildingDeck, setIsBuildingDeck] = useState(false);
+  const [deckBuildError, setDeckBuildError] = useState<string | null>(null);
   const [lastSwipeSnapshot, setLastSwipeSnapshot] = useState<{ session: SessionState; profile: TasteProfile } | null>(null);
 
   function buildHistoryHints(): AiHistoryHints {
@@ -58,6 +60,7 @@ export function useSessionFlow(params: {
 
   async function startSwipeRound() {
     setIsBuildingDeck(true);
+    setDeckBuildError(null);
     setLastSwipeSnapshot(null);
     saveLastAnswers({ ...session.answers, quickModeId: undefined });
 
@@ -130,9 +133,18 @@ export function useSessionFlow(params: {
         winnerId: undefined,
         backupId: undefined
       }));
+    } catch (error) {
+      const gateMessage = apiGateUserMessage(error);
+      setDeckBuildError(
+        gateMessage ?? (error instanceof Error ? error.message : "Could not build your deck. Try again.")
+      );
     } finally {
       setIsBuildingDeck(false);
     }
+  }
+
+  function clearDeckBuildError() {
+    setDeckBuildError(null);
   }
 
   function handleSwipe(action: "keep" | "pass") {
@@ -250,6 +262,8 @@ export function useSessionFlow(params: {
 
   return {
     isBuildingDeck,
+    deckBuildError,
+    clearDeckBuildError,
     canUndo: Boolean(lastSwipeSnapshot),
     startSwipeRound,
     handleSwipe,

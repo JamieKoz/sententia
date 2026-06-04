@@ -1,4 +1,4 @@
-import { QUICK_PRESETS, YEAR_MAX, YEAR_MIN } from "../config/options";
+import { YEAR_MAX, YEAR_MIN } from "../config/options";
 import type { OnboardingAnswers, SessionState, TasteProfile } from "../types";
 import { deriveSmartDefaultsFromProfile } from "../utils/appState";
 
@@ -8,8 +8,6 @@ export function useQuickSetup(params: {
   setSession: React.Dispatch<React.SetStateAction<SessionState>>;
 }) {
   const { answers, profile, setSession } = params;
-  const hasSelectedQuickMode = Boolean(answers.quickModeId);
-  const selectedQuickPreset = QUICK_PRESETS.find((preset) => preset.id === answers.quickModeId);
   const customYearRange = answers.customYearRange;
   const customYearStartPct = customYearRange
     ? ((customYearRange.min - YEAR_MIN) / (YEAR_MAX - YEAR_MIN)) * 100
@@ -28,19 +26,11 @@ export function useQuickSetup(params: {
     }));
   }
 
-  function selectQuickMode(preset: (typeof QUICK_PRESETS)[number]) {
+  function beginOnboarding() {
     const smartDefaults = deriveSmartDefaultsFromProfile(profile);
     updateAnswers({
       ...smartDefaults,
-      ...preset.values,
-      quickModeId: preset.id
-    });
-  }
-
-  function resetQuickSetup() {
-    const smartDefaults = deriveSmartDefaultsFromProfile(profile);
-    updateAnswers({
-      ...smartDefaults,
+      moods: [],
       quickModeId: undefined
     });
   }
@@ -115,13 +105,10 @@ export function useQuickSetup(params: {
   }
 
   return {
-    hasSelectedQuickMode,
-    selectedQuickPreset,
     customYearStartPct,
     customYearEndPct,
     updateAnswers,
-    selectQuickMode,
-    resetQuickSetup,
+    beginOnboarding,
     toggleProvider,
     toggleExclusion,
     toggleMood,

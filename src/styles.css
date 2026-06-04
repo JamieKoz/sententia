@@ -171,6 +171,110 @@ body {
   }
 }
 
+@keyframes onboarding-step-forward {
+  from {
+    opacity: 0;
+    transform: translateX(28px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes onboarding-step-back {
+  from {
+    opacity: 0;
+    transform: translateX(-28px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.onboarding-shell {
+  display: flex;
+  min-height: calc(100dvh - 2.5rem);
+  flex-direction: column;
+}
+
+.onboarding-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.onboarding-content--scroll {
+  overflow-y: auto;
+  padding-bottom: 1rem;
+}
+
+.onboarding-step {
+  animation-duration: 0.48s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: both;
+}
+
+.onboarding-step--forward {
+  animation-name: onboarding-step-forward;
+}
+
+.onboarding-step--back {
+  animation-name: onboarding-step-back;
+}
+
+.onboarding-step--centered {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.onboarding-choice-card {
+  display: flex;
+  min-height: 8.5rem;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(24, 24, 27, 0.72);
+  padding: 1.25rem;
+  text-align: left;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.onboarding-choice-card:hover {
+  border-color: rgba(255, 255, 255, 0.42);
+  background: rgba(39, 39, 42, 0.82);
+  transform: translateY(-2px);
+}
+
+.onboarding-choice-card--selected {
+  border-color: rgba(196, 181, 253, 0.75);
+  background: linear-gradient(145deg, rgba(91, 33, 182, 0.42), rgba(24, 24, 27, 0.88));
+  box-shadow: 0 12px 36px rgba(91, 33, 182, 0.28);
+}
+
+.onboarding-choice-card--tall {
+  min-height: 10.5rem;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.onboarding-nav {
+  flex-shrink: 0;
+  padding-bottom: 0.5rem;
+}
+
 .onboarding-reveal {
   animation: onboarding-reveal 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -309,6 +413,18 @@ body {
     opacity: 1;
     transform: none;
     filter: none;
+  }
+
+  .onboarding-step,
+  .onboarding-step--forward,
+  .onboarding-step--back {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .onboarding-choice-card:hover {
+    transform: none;
   }
 
   .onboarding-reveal,

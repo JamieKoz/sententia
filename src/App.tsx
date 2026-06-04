@@ -44,13 +44,10 @@ export function App() {
   const isCardFocusedPhase = session.phase === "swipe" || session.phase === "showdown";
 
   const {
-    hasSelectedQuickMode,
-    selectedQuickPreset,
     customYearStartPct,
     customYearEndPct,
     updateAnswers,
-    selectQuickMode,
-    resetQuickSetup,
+    beginOnboarding,
     toggleProvider,
     toggleExclusion,
     toggleMood,
@@ -161,18 +158,17 @@ export function App() {
       <div className="pointer-events-none fixed inset-0 z-10 bg-gradient-to-b from-black/55 via-black/35 to-black/85" />
 
       <main className="relative z-20 mx-auto max-w-5xl px-3 py-3 text-zinc-100 sm:px-4 sm:py-5 md:py-10 mb-16">
-        {!isCardFocusedPhase ? <AppHeader onClearCache={handleResetPersonalization} /> : null}
+        {!isCardFocusedPhase && session.phase !== "questions" ? (
+          <AppHeader onClearCache={handleResetPersonalization} />
+        ) : null}
 
         {session.phase === "questions" ? (
           <QuestionsSection
-            hasSelectedQuickMode={hasSelectedQuickMode}
-            selectedQuickPresetLabel={selectedQuickPreset?.label}
             answers={session.answers}
             isBuildingDeck={isBuildingDeck}
             customYearStartPct={customYearStartPct}
             customYearEndPct={customYearEndPct}
-            onSelectQuickMode={selectQuickMode}
-            onResetQuickSetup={resetQuickSetup}
+            onBegin={beginOnboarding}
             onUpdateAnswers={updateAnswers}
             onToggleCustomYearRange={toggleCustomYearRange}
             onUpdateCustomYearRange={updateCustomYearRange}
@@ -181,6 +177,7 @@ export function App() {
             onToggleMood={toggleMood}
             onToggleLanguage={toggleLanguage}
             onToggleFamiliarity={toggleFamiliarity}
+            onClearCache={handleResetPersonalization}
             onStart={startSwipeRound}
           />
         ) : null}

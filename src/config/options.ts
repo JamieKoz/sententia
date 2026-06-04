@@ -1,11 +1,24 @@
-import type { OnboardingAnswers } from "../types";
+import type { OnboardingAnswers, RuntimeBucket } from "../types";
 
 /** Canonical mood tokens (match `Title.moods` / scoring); `label` is UI-only. */
-export const MOOD_CHIPS: { value: string; label: string }[] = [
-  { value: "light", label: "Light" },
-  { value: "intense", label: "Intense" },
-  { value: "emotional", label: "Emotional" },
-  { value: "mind-bending", label: "Mind-bending" }
+export const MOOD_CHIPS: { value: string; label: string; description: string }[] = [
+  { value: "light", label: "Light", description: "Easy, feel-good, low effort" },
+  { value: "intense", label: "Intense", description: "Fast pace, tension, momentum" },
+  { value: "emotional", label: "Emotional", description: "Rich stories with real pull" },
+  { value: "mind-bending", label: "Mind-bending", description: "Twists and unconventional ideas" }
+];
+
+export const TYPE_OPTIONS: { value: "movie" | "series" | "either"; label: string; description: string }[] = [
+  { value: "movie", label: "Movie", description: "One sitting, start to finish" },
+  { value: "series", label: "Series", description: "Episodes you can settle into" },
+  { value: "either", label: "Either", description: "Surprise me with the best match" }
+];
+
+export const RUNTIME_OPTIONS: { value: RuntimeBucket | "any"; label: string; description: string }[] = [
+  { value: "any", label: "Any", description: "No length preference" },
+  { value: "short", label: "Under 90m", description: "Quick watch" },
+  { value: "standard", label: "90–130m", description: "Standard feature length" },
+  { value: "long", label: "130m+", description: "Epic or slow-burn" }
 ];
 
 export function normalizeMoodList(raw?: string[] | string): string[] {

@@ -17,26 +17,69 @@ body {
   content: "";
 }
 
-.hero-tenor {
+.thumbnail-backdrop {
   position: fixed;
   inset: 0;
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
+  background: #000;
 }
 
-.hero-tenor .tenor-gif-embed {
-  width: 100% !important;
-  height: 100% !important;
+.thumbnail-backdrop-rows {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.85rem;
+  height: 100%;
+  padding: 2rem 0;
+  transform: rotate(-4deg) scale(1.12);
 }
 
-.hero-tenor iframe {
-  width: 100% !important;
-  height: 100% !important;
-  border: 0 !important;
+.thumbnail-row {
+  overflow: hidden;
+  flex-shrink: 0;
+  will-change: transform;
+}
+
+.thumbnail-row-track {
+  display: flex;
+  width: max-content;
+  gap: 0.75rem;
+  animation: thumbnail-marquee-left linear infinite;
+}
+
+.thumbnail-row-track--reverse {
+  animation-name: thumbnail-marquee-right;
+}
+
+.thumbnail-row-poster {
+  height: clamp(7.5rem, 14vh, 11.5rem);
+  width: auto;
+  aspect-ratio: 2 / 3;
   object-fit: cover;
-  transform: scale(1.18);
-  filter: saturate(0.9) contrast(1.02);
+  border-radius: 0.45rem;
+  flex-shrink: 0;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.65);
+  filter: saturate(0.92) brightness(0.88);
+}
+
+@keyframes thumbnail-marquee-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes thumbnail-marquee-right {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .dual-range {
@@ -235,6 +278,15 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .thumbnail-row-track {
+    animation: none;
+    transform: translateX(-12%);
+  }
+
+  .thumbnail-row {
+    transform: none !important;
+  }
+
   .deck-building-skeleton {
     animation: none;
     background-position: 50% 0;

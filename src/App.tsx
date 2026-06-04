@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AppHeader } from "./components/AppHeader";
+import { ThumbnailBackdrop } from "./components/ThumbnailBackdrop";
 import { QuestionsSection } from "./components/QuestionsSection";
 import { ResultSection } from "./components/ResultSection";
 import { ShowdownDetailsModal } from "./components/ShowdownDetailsModal";
@@ -113,16 +114,6 @@ export function App() {
   }, [profile]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (document.querySelector('script[src="https://tenor.com/embed.js"]')) return;
-
-    const script = document.createElement("script");
-    script.src = "https://tenor.com/embed.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
-
-  useEffect(() => {
     if (session.phase !== "showdown") {
       setShowdownDetailsTitle(null);
     }
@@ -165,20 +156,9 @@ export function App() {
 
   return (
     <div className="relative min-h-screen">
-      <div className="hero-tenor" aria-hidden="true">
-        <div
-          className="tenor-gif-embed"
-          data-postid="14815314352463346984"
-          data-share-method="host"
-          data-aspect-ratio="1.33333"
-          data-width="100%"
-        >
-          <a href="https://tenor.com/view/tom-neal-detour-film-noir-driving-gif-14815314352463346984">
-            Tom Neal Detour GIF
-          </a>
-        </div>
-      </div>
-      <div className="pointer-events-none fixed inset-0 z-10 bg-gradient-to-b from-black/40 via-black/55 to-black/80" />
+      <ThumbnailBackdrop />
+      <div className="pointer-events-none fixed inset-0 z-10 bg-[radial-gradient(ellipse_85%_70%_at_50%_45%,rgba(0,0,0,0.15),rgba(0,0,0,0.92))]" />
+      <div className="pointer-events-none fixed inset-0 z-10 bg-gradient-to-b from-black/55 via-black/35 to-black/85" />
 
       <main className="relative z-20 mx-auto max-w-5xl px-3 py-3 text-zinc-100 sm:px-4 sm:py-5 md:py-10 mb-16">
         {!isCardFocusedPhase ? <AppHeader onClearCache={handleResetPersonalization} /> : null}

@@ -32,6 +32,7 @@ describe("buildRerankPrompt", () => {
       answers,
       profile,
       candidates: [sampleTitle],
+      watchRegion: "AU",
       historyHints: {
         likedSample: ["Inception"],
         rejectedSample: [],
@@ -40,6 +41,7 @@ describe("buildRerankPrompt", () => {
       }
     });
     const payload = JSON.parse(raw) as {
+      watchRegion?: { code: string };
       onboarding: Record<string, unknown>;
       candidates: Array<Record<string, unknown>>;
       history: Record<string, unknown>;
@@ -51,6 +53,7 @@ describe("buildRerankPrompt", () => {
     expect(String(payload.candidates[0].overview).length).toBeLessThanOrEqual(360);
     expect(payload.candidates[0].cast).toEqual(["Actor One", "Actor Two"]);
     expect(payload.history?.sessionCount).toBe(3);
+    expect(payload.watchRegion?.code).toBe("AU");
   });
 });
 
@@ -64,6 +67,7 @@ describe("buildGeneratePrompt", () => {
       answers: createInitialAnswers(),
       profile,
       count: 5,
+      watchRegion: "US",
       historyHints: {
         likedSample: ["X"],
         rejectedSample: [],
@@ -71,9 +75,13 @@ describe("buildGeneratePrompt", () => {
         sessionCount: 5
       }
     });
-    const payload = JSON.parse(raw) as { profileSignals: Record<string, unknown> };
+    const payload = JSON.parse(raw) as {
+      watchRegion?: string;
+      profileSignals: Record<string, unknown>;
+    };
     expect(payload.profileSignals.likedIds).toEqual(["a", "b"]);
     expect(payload.profileSignals.sessionCount).toBe(5);
     expect(payload.profileSignals.lastChosenTitle).toBe("winner-1");
+    expect(payload.watchRegion).toBe("US");
   });
 });

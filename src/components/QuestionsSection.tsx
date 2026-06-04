@@ -11,7 +11,8 @@ import {
   RUNTIME_OPTIONS,
   TYPE_OPTIONS
 } from "../config/options";
-import type { OnboardingAnswers } from "../types";
+import { SettingsMenu } from "./SettingsMenu";
+import type { OnboardingAnswers, ViewerPrefs } from "../types";
 
 type OnboardingStep =
   | "welcome"
@@ -56,40 +57,6 @@ function nextStep(step: OnboardingStep): OnboardingStep | null {
 function prevStep(step: OnboardingStep): OnboardingStep | null {
   const idx = stepIndex(step);
   return idx > 0 ? STEP_ORDER[idx - 1]! : null;
-}
-
-function OnboardingSettings({ onClearCache }: { onClearCache: () => void }) {
-  return (
-    <details className="group relative ml-auto">
-      <summary className="summary-no-marker list-none cursor-pointer rounded-full border border-white/30 bg-zinc-900/60 p-2 text-sm text-zinc-100 backdrop-blur-md transition hover:border-white/50 hover:bg-zinc-800/70">
-        <span className="sr-only">Settings</span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          className="h-5 w-5"
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M10.325 4.317a1.724 1.724 0 0 1 3.35 0 1.724 1.724 0 0 0 2.573 1.066 1.724 1.724 0 0 1 2.49 2.49 1.724 1.724 0 0 0 1.065 2.573 1.724 1.724 0 0 1 0 3.35 1.724 1.724 0 0 0-1.066 2.573 1.724 1.724 0 0 1-2.49 2.49 1.724 1.724 0 0 0-2.573 1.065 1.724 1.724 0 0 1-3.35 0 1.724 1.724 0 0 0-2.573-1.066 1.724 1.724 0 0 1-2.49-2.49 1.724 1.724 0 0 0-1.065-2.573 1.724 1.724 0 0 1 0-3.35 1.724 1.724 0 0 0 1.066-2.573 1.724 1.724 0 0 1 2.49-2.49 1.724 1.724 0 0 0 2.573-1.065Z"
-          />
-          <circle cx="12" cy="12" r="3.25" />
-        </svg>
-      </summary>
-      <div className="absolute right-0 z-30 mt-2 w-44 rounded-xl border border-white/20 bg-zinc-900/90 p-2 shadow-2xl backdrop-blur-xl">
-        <button
-          className="w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-100 transition hover:bg-zinc-800/80"
-          onClick={onClearCache}
-        >
-          Clear cache
-        </button>
-      </div>
-    </details>
-  );
 }
 
 function StepFrame({
@@ -156,6 +123,8 @@ export function QuestionsSection(props: {
   onToggleProvider: (provider: string) => void;
   onToggleExclusion: (exclusion: string) => void;
   onToggleMood: (mood: string) => void;
+  viewerPrefs: ViewerPrefs;
+  onWatchRegionChange: (watchRegion: string) => void;
   onClearCache: () => void;
   onStart: () => void;
 }) {
@@ -173,6 +142,8 @@ export function QuestionsSection(props: {
     onToggleProvider,
     onToggleExclusion,
     onToggleMood,
+    viewerPrefs,
+    onWatchRegionChange,
     onClearCache,
     onStart
   } = props;
@@ -243,7 +214,11 @@ export function QuestionsSection(props: {
     <>
       <div className="onboarding-shell">
         <div className="mb-4 flex justify-end sm:mb-6">
-          <OnboardingSettings onClearCache={onClearCache} />
+          <SettingsMenu
+            viewerPrefs={viewerPrefs}
+            onWatchRegionChange={onWatchRegionChange}
+            onClearCache={onClearCache}
+          />
         </div>
 
         <div className="onboarding-content">
@@ -477,7 +452,7 @@ export function QuestionsSection(props: {
               subtitle="Everything looks good? We'll build your deck from this."
               footer={stepNav}
             >
-              <OnboardingSummary answers={answers} />
+              <OnboardingSummary answers={answers} watchRegion={viewerPrefs.watchRegion} />
             </StepFrame>
           ) : null}
         </div>

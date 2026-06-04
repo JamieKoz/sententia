@@ -14,7 +14,14 @@ import { useSessionFlow } from "./hooks/useSessionFlow";
 import { useSwipeGesture } from "./hooks/useSwipeGesture";
 import { openWatchUrl } from "./services/affiliate";
 import { loadBackendConfig } from "./services/backendConfig";
+import {
+  bootstrapViewerPrefs,
+  loadViewerPrefs,
+  saveViewerPrefs,
+  setManualWatchRegion
+} from "./services/viewerPrefs";
 import { loadLastAnswers, loadProfile, resetPersonalization, saveProfile } from "./services/storage";
+import type { ViewerPrefs } from "./types";
 import { createInitialAnswers, createSession, nextPair } from "./state/machine";
 import type { SessionState, Title } from "./types";
 
@@ -30,6 +37,12 @@ export function App() {
   });
 
   const [catalog, setCatalog] = useState<Title[]>(MOCK_TITLES);
+  const [viewerPrefs, setViewerPrefs] = useState<ViewerPrefs>(() => {
+    if (typeof window === "undefined") {
+      return { version: 1, watchRegion: "US", source: "auto" };
+    }
+    return loadViewerPrefs();
+  });
   const [showdownDetailsTitle, setShowdownDetailsTitle] = useState<Title | null>(null);
 
   const titlesById = useMemo(() => {
@@ -82,7 +95,8 @@ export function App() {
     currentTitle,
     showdownLeft,
     showdownRight,
-    winner
+    winner,
+    watchRegion: viewerPrefs.watchRegion
   });
 
   const {
@@ -110,7 +124,13 @@ export function App() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     void loadBackendConfig();
+    void bootstrapViewerPrefs().then(setViewerPrefs);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    saveViewerPrefs(viewerPrefs);
+  }, [viewerPrefs]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -149,12 +169,17 @@ export function App() {
   function handleResetPersonalization() {
     resetPersonalization();
     setProfile(createDefaultProfile());
+    void bootstrapViewerPrefs().then(setViewerPrefs);
+  }
+
+  function handleWatchRegionChange(watchRegion: string) {
+    setViewerPrefs((prev) => setManualWatchRegion(prev, watchRegion));
   }
 
   function handleWatchNow() {
     finalizeDecision();
     if (!winner || typeof window === "undefined") return;
-    openWatchUrl(winner);
+    openWatchUrl(winner, viewerPrefs.watchRegion);
   }
 
   return (
@@ -165,7 +190,11 @@ export function App() {
 
       <main className="relative z-20 mx-auto max-w-5xl px-3 py-3 text-zinc-100 sm:px-4 sm:py-5 md:py-10 mb-16">
         {!isCardFocusedPhase && session.phase !== "questions" ? (
-          <AppHeader onClearCache={handleResetPersonalization} />
+          <AppHeader
+            viewerPrefs={viewerPrefs}
+            onWatchRegionChange={handleWatchRegionChange}
+            onClearCache={handleResetPersonalization}
+          />
         ) : null}
 
         {session.phase === "questions" ? (
@@ -183,6 +212,8 @@ export function App() {
             onToggleProvider={toggleProvider}
             onToggleExclusion={toggleExclusion}
             onToggleMood={toggleMood}
+            viewerPrefs={viewerPrefs}
+            onWatchRegionChange={handleWatchRegionChange}
             onClearCache={handleResetPersonalization}
             onStart={startSwipeRound}
           />

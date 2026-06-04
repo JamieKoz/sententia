@@ -1,8 +1,14 @@
 import { formatOnboardingSummary } from "../utils/onboardingSummary";
 import type { OnboardingAnswers } from "../types";
 
-export function OnboardingSummary({ answers }: { answers: OnboardingAnswers }) {
-  const rows = formatOnboardingSummary(answers);
+export function OnboardingSummary({
+  answers,
+  watchRegion
+}: {
+  answers: OnboardingAnswers;
+  watchRegion?: string;
+}) {
+  const rows = formatOnboardingSummary(answers, watchRegion);
 
   return (
     <dl className="onboarding-summary">

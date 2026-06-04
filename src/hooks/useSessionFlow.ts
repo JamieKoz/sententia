@@ -5,6 +5,7 @@ import { rankTitles } from "../engine/scoring";
 import type { AiHistoryHints } from "../services/ai";
 import { generateSuggestionsWithAi, rerankCandidatesWithAi } from "../services/ai";
 import { saveLastAnswers } from "../services/storage";
+import { trackEvent } from "../services/analytics";
 import { apiGateUserMessage } from "../services/apiErrors";
 import { loadBackendConfig } from "../services/backendConfig";
 import { enrichTitlesWithTmdb, resolveAiSuggestionsToTitles } from "../services/tmdb";
@@ -19,6 +20,7 @@ export function useSessionFlow(params: {
   setProfile: React.Dispatch<React.SetStateAction<TasteProfile>>;
   catalog: Title[];
   setCatalog: React.Dispatch<React.SetStateAction<Title[]>>;
+  watchRegion: string;
   currentTitle?: Title;
   showdownLeft?: Title;
   showdownRight?: Title;
@@ -31,6 +33,7 @@ export function useSessionFlow(params: {
     setProfile,
     catalog,
     setCatalog,
+    watchRegion,
     currentTitle,
     showdownLeft,
     showdownRight,
@@ -63,6 +66,9 @@ export function useSessionFlow(params: {
     setDeckBuildError(null);
     setLastSwipeSnapshot(null);
     saveLastAnswers({ ...session.answers, quickModeId: undefined });
+    trackEvent("deck_build_start", {
+      watch_region: watchRegion
+    });
 
     try {
       const { ai: aiEnabled, tmdb: tmdbEnabled } = await loadBackendConfig();
@@ -74,6 +80,7 @@ export function useSessionFlow(params: {
           answers: session.answers,
           profile,
           count: 10,
+          watchRegion,
           historyHints
         });
 
@@ -108,6 +115,7 @@ export function useSessionFlow(params: {
           answers: session.answers,
           profile: activeProfile,
           candidates: top20,
+          watchRegion,
           historyHints: buildHistoryHints()
         });
         const baseDeckTitles = (reranked.length ? reranked : top20).slice(0, 10);

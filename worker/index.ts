@@ -69,6 +69,15 @@ export default {
   async fetch(request, env): Promise<Response> {
     const url = new URL(request.url);
 
+    if (url.pathname === "/api/viewer-region" && request.method === "GET") {
+      const cf = request.cf as { country?: string } | undefined;
+      const country = cf?.country ?? request.headers.get("CF-IPCountry");
+      const normalized = country?.trim().toUpperCase();
+      return json({
+        country: normalized && normalized.length === 2 ? normalized : null
+      });
+    }
+
     if (url.pathname === "/api/config" && request.method === "GET") {
       const openaiModels = (env.AI_MODELS ?? "gpt-4.1-mini")
         .split(",")

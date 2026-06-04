@@ -1,3 +1,4 @@
+import { watchRegionLabel } from "../config/regions";
 import type { AiGenerateRequest, AiHistoryHints, AiRerankRequest } from "./aiTypes";
 
 function compactHistory(h?: AiHistoryHints) {
@@ -46,6 +47,11 @@ export function buildRerankPrompt(req: AiRerankRequest): string {
       "Prefer diverse top picks but still relevance-first.",
       "Return orderedIds containing every candidate id exactly once, no extras."
     ],
+    watchRegion: {
+      code: req.watchRegion,
+      label: watchRegionLabel(req.watchRegion),
+      note: "Prefer titles realistically available to stream in this country; avoid US-only exclusives when region is not US."
+    },
     onboarding: {
       moods: req.answers.moods,
       preferredType: req.answers.preferredType,
@@ -84,8 +90,10 @@ export function buildGeneratePrompt(req: AiGenerateRequest): string {
       "Use real well-known titles that exist in TMDB (movies and TV series).",
       "Do not include duplicates.",
       "Respect preferred type if user set one.",
-      "Avoid genres or themes the user listed under hardExclusions."
+      "Avoid genres or themes the user listed under hardExclusions.",
+      `User watches in ${watchRegionLabel(req.watchRegion)} (${req.watchRegion}); favor titles they can plausibly access there.`
     ],
+    watchRegion: req.watchRegion,
     answers: req.answers,
     profileSignals: {
       genreAffinity: req.profile.genreAffinity,

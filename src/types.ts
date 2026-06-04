@@ -5,6 +5,16 @@ export type RuntimeBucket = "short" | "standard" | "long";
 
 export type SwipeAction = "keep" | "pass";
 
+export type ViewerRegionSource = "auto" | "manual";
+
+/** Persisted watch country for TMDB, affiliates, and shared sessions. */
+export interface ViewerPrefs {
+  version: 1;
+  watchRegion: string;
+  source: ViewerRegionSource;
+  detectedAt?: string;
+}
+
 export interface OnboardingAnswers {
   quickModeId?: string;
   moods?: string[];

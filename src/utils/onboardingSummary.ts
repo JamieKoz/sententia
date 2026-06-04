@@ -10,6 +10,7 @@ import {
   RUNTIME_OPTIONS,
   TYPE_OPTIONS
 } from "../config/options";
+import { watchRegionLabel } from "../config/regions";
 import type { OnboardingAnswers } from "../types";
 
 export type OnboardingSummaryRow = {
@@ -46,7 +47,10 @@ function formatAudience(answers: OnboardingAnswers): string {
   return DISCOVERY_AUDIENCE_OPTIONS.find((item) => item.id === id)?.label ?? "General";
 }
 
-export function formatOnboardingSummary(answers: OnboardingAnswers): OnboardingSummaryRow[] {
+export function formatOnboardingSummary(
+  answers: OnboardingAnswers,
+  watchRegion?: string
+): OnboardingSummaryRow[] {
   const moods = (answers.moods ?? []).map(
     (value) => MOOD_CHIPS.find((mood) => mood.value === value)?.label ?? value
   );
@@ -68,7 +72,7 @@ export function formatOnboardingSummary(answers: OnboardingAnswers): OnboardingS
   const avoid = answers.hardExclusions ?? [];
   const keywords = answers.keywords ?? [];
 
-  return [
+  const rows: OnboardingSummaryRow[] = [
     { label: "Mood", value: joinLabels(moods) },
     { label: "Format", value: type },
     { label: "Runtime", value: runtime },
@@ -80,4 +84,10 @@ export function formatOnboardingSummary(answers: OnboardingAnswers): OnboardingS
     { label: "Avoid", value: avoid.length ? joinLabels(avoid) : "None" },
     { label: "Keywords", value: keywords.length ? keywords.join(", ") : "None" }
   ];
+
+  if (watchRegion) {
+    rows.splice(6, 0, { label: "Region", value: watchRegionLabel(watchRegion) });
+  }
+
+  return rows;
 }

@@ -224,7 +224,7 @@ export function QuestionsSection(props: {
         <div className="onboarding-content">
           {step === "welcome" ? (
             <div key="welcome" className="onboarding-step onboarding-step--forward onboarding-welcome">
-              <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl">CineMatch</h1>
+              <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl">CouchPicks</h1>
               <p className="mt-4 max-w-md text-base text-zinc-300 sm:text-lg">Find the match for your next film.</p>
               <div className="mt-8">
                 <NavButton variant="primary" onClick={goNext}>

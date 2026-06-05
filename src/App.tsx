@@ -156,7 +156,7 @@ export function App() {
     <div className="relative min-h-screen">
       <ThumbnailBackdrop />
       <div className="pointer-events-none fixed inset-0 z-10 bg-[radial-gradient(ellipse_85%_70%_at_50%_45%,rgba(0,0,0,0.15),rgba(0,0,0,0.92))]" />
-      <div className="pointer-events-none fixed inset-0 z-10 bg-gradient-to-b from-black/55 via-black/35 to-black/85" />
+      <div className="pointer-events-none fixed inset-0 z-10 bg-gradient-to-b from-black/35 via-black/20 to-black/45" />
 
       <main className="relative z-20 mx-auto max-w-5xl px-3 py-3 text-zinc-100 sm:px-4 sm:py-5 md:py-10 mb-16">
         {!isCardFocusedPhase && session.phase !== "questions" ? (

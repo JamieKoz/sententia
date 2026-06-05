@@ -16,7 +16,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error("cinematch render error", error, errorInfo);
+    console.error("couchpicks render error", error, errorInfo);
   }
 
   private handleReload = () => {

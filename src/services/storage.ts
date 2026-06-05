@@ -10,9 +10,9 @@ export function createDefaultViewerPrefs(): ViewerPrefs {
   };
 }
 
-const PROFILE_KEY = "cinematch.tasteProfile.v1";
-const ANSWERS_KEY = "cinematch.lastAnswers.v1";
-const VIEWER_PREFS_KEY = "cinematch.viewerPrefs.v1";
+const PROFILE_KEY = "couchpicks.tasteProfile.v1";
+const ANSWERS_KEY = "couchpicks.lastAnswers.v1";
+const VIEWER_PREFS_KEY = "couchpicks.viewerPrefs.v1";
 
 function isBrowser(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";

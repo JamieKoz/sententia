@@ -14,7 +14,7 @@ export function useShareCurrentTitle(currentTitle?: Title) {
     if (!currentTitle) return;
     const shareText = `${currentTitle.name} (${currentTitle.releaseYear})`;
     const payload = {
-      title: "CineMatch pick",
+      title: "CouchPicks pick",
       text: `Check out this pick: ${shareText}`
     };
 

@@ -13,7 +13,7 @@ export function AppHeader({
   return (
     <header className="mb-3">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">CineMatch</h1>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">CouchPicks</h1>
         <SettingsMenu
           viewerPrefs={viewerPrefs}
           onWatchRegionChange={onWatchRegionChange}

@@ -3,34 +3,18 @@ import { applyDecisionSignal, applyKeepSignal, applyPassSignal, createDefaultPro
 import { saveLastAnswers } from "../services/storage";
 import { trackEvent } from "../services/analytics";
 import { apiGateUserMessage } from "../services/apiErrors";
-import type { SessionState, TasteProfile, Title } from "../types";
+import type { SessionState, TasteProfile } from "../types";
 import { cloneProfile, cloneSession, mergeCatalog } from "../utils/appState";
 import { sessionReducer } from "../state/sessionReducer";
 import { buildRecommendationDeck } from "../services/deckBuilder";
 import { nextPair } from "../state/machine";
+import { useSessionStore } from "../state/sessionStore";
 
 export function useSessionFlow(params: {
-  session: SessionState;
-  setSession: React.Dispatch<React.SetStateAction<SessionState>>;
-  profile: TasteProfile;
-  setProfile: React.Dispatch<React.SetStateAction<TasteProfile>>;
-  catalog: Title[];
-  setCatalog: React.Dispatch<React.SetStateAction<Title[]>>;
   watchRegion: string;
-  currentTitle?: Title;
-  winner?: Title;
 }) {
-  const {
-    session,
-    setSession,
-    profile,
-    setProfile,
-    catalog,
-    setCatalog,
-    watchRegion,
-    currentTitle,
-    winner
-  } = params;
+  const { watchRegion } = params;
+  const { session, setSession, profile, setProfile, catalog, setCatalog, currentTitle, winner } = useSessionStore();
 
   const [isBuildingDeck, setIsBuildingDeck] = useState(false);
   const [deckBuildError, setDeckBuildError] = useState<string | null>(null);

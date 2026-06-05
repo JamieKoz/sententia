@@ -1,14 +1,12 @@
 import { YEAR_MAX, YEAR_MIN } from "../config/options";
-import type { OnboardingAnswers, SessionState, TasteProfile } from "../types";
+import type { OnboardingAnswers } from "../types";
 import { deriveSmartDefaultsFromProfile } from "../utils/appState";
 import { sessionReducer } from "../state/sessionReducer";
+import { useSessionStore } from "../state/sessionStore";
 
-export function useQuickSetup(params: {
-  answers: OnboardingAnswers;
-  profile: TasteProfile;
-  setSession: React.Dispatch<React.SetStateAction<SessionState>>;
-}) {
-  const { answers, profile, setSession } = params;
+export function useQuickSetup() {
+  const { session, profile, setSession } = useSessionStore();
+  const answers = session.answers;
   const customYearRange = answers.customYearRange;
   const customYearStartPct = customYearRange
     ? ((customYearRange.min - YEAR_MIN) / (YEAR_MAX - YEAR_MIN)) * 100

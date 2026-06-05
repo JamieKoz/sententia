@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AppHeader } from "./components/AppHeader";
 import { ThumbnailBackdrop } from "./components/ThumbnailBackdrop";
 import { QuestionsSection } from "./components/QuestionsSection";
@@ -6,7 +6,6 @@ import { ResultSection } from "./components/ResultSection";
 import { ShowdownDetailsModal } from "./components/ShowdownDetailsModal";
 import { ShowdownSection } from "./components/ShowdownSection";
 import { SwipeSection } from "./components/SwipeSection";
-import { MOCK_TITLES } from "./data/mockTitles";
 import { createDefaultProfile } from "./engine/profile";
 import { useQuickSetup } from "./hooks/useQuickSetup";
 import { useShareCurrentTitle } from "./hooks/useShareCurrentTitle";
@@ -20,23 +19,23 @@ import {
   saveViewerPrefs,
   setManualWatchRegion
 } from "./services/viewerPrefs";
-import { loadLastAnswers, loadProfile, resetPersonalization, saveProfile } from "./services/storage";
-import type { ViewerPrefs } from "./types";
-import { createInitialAnswers, createSession, nextPair } from "./state/machine";
-import type { SessionState, Title } from "./types";
+import { resetPersonalization, saveProfile } from "./services/storage";
+import type { Title, ViewerPrefs } from "./types";
+import { useSessionStore } from "./state/sessionStore";
 
 export function App() {
-  const [profile, setProfile] = useState(() => {
-    if (typeof window === "undefined") return createDefaultProfile();
-    return loadProfile();
-  });
-
-  const [session, setSession] = useState<SessionState>(() => {
-    const seed = typeof window === "undefined" ? {} : loadLastAnswers();
-    return createSession(createInitialAnswers(seed));
-  });
-
-  const [catalog, setCatalog] = useState<Title[]>(MOCK_TITLES);
+  const {
+    profile,
+    setProfile,
+    session,
+    currentTitle,
+    nextSwipeTitle,
+    showdownLeft,
+    showdownRight,
+    winner,
+    backup,
+    isCardFocusedPhase
+  } = useSessionStore();
   const [viewerPrefs, setViewerPrefs] = useState<ViewerPrefs>(() => {
     if (typeof window === "undefined") {
       return { version: 1, watchRegion: "US", source: "auto" };
@@ -44,19 +43,6 @@ export function App() {
     return loadViewerPrefs();
   });
   const [showdownDetailsTitle, setShowdownDetailsTitle] = useState<Title | null>(null);
-
-  const titlesById = useMemo(() => {
-    return new Map(catalog.map((title) => [title.id, title]));
-  }, [catalog]);
-
-  const currentTitle = session.phase === "swipe" ? titlesById.get(session.deck[session.deckCursor]) : undefined;
-  const nextSwipeTitle = session.phase === "swipe" ? titlesById.get(session.deck[session.deckCursor + 1]) : undefined;
-  const showdownPair = session.phase === "showdown" ? nextPair(session.showdownQueue) : null;
-  const showdownLeft = showdownPair ? titlesById.get(showdownPair[0]) : undefined;
-  const showdownRight = showdownPair ? titlesById.get(showdownPair[1]) : undefined;
-  const winner = session.winnerId ? titlesById.get(session.winnerId) : undefined;
-  const backup = session.backupId ? titlesById.get(session.backupId) : undefined;
-  const isCardFocusedPhase = session.phase === "swipe" || session.phase === "showdown";
 
   const {
     customYearStartPct,
@@ -68,11 +54,7 @@ export function App() {
     toggleMood,
     toggleCustomYearRange,
     updateCustomYearRange
-  } = useQuickSetup({
-    answers: session.answers,
-    profile,
-    setSession
-  });
+  } = useQuickSetup();
 
   const {
     isBuildingDeck,
@@ -85,17 +67,7 @@ export function App() {
     handleShowdownPick,
     finalizeDecision,
     resetAndStartNewRound
-  } = useSessionFlow({
-    session,
-    setSession,
-    profile,
-    setProfile,
-    catalog,
-    setCatalog,
-    currentTitle,
-    winner,
-    watchRegion: viewerPrefs.watchRegion
-  });
+  } = useSessionFlow({ watchRegion: viewerPrefs.watchRegion });
 
   const {
     swipeDeltaX,

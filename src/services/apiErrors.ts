@@ -33,7 +33,7 @@ export async function throwIfApiGateError(response: Response): Promise<void> {
 export function apiGateUserMessage(error: unknown): string | null {
   if (!(error instanceof ApiGateError)) return null;
   if (error.code === "rate_limit") {
-    return "You've hit today's free AI limit. Try again tomorrow, or use picks without AI for now.";
+    return "You've reached your deck limit for today. Try again tomorrow.";
   }
   if (error.code === "turnstile") {
     return "Security check failed. Refresh the page and try again.";

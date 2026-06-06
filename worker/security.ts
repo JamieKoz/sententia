@@ -57,7 +57,7 @@ export interface RateLimitCheck {
   limit: number;
 }
 
-export async function checkAndIncrementDailyLimit(
+export async function readDailyLimitStatus(
   kv: KVNamespace,
   ip: string,
   limit: number
@@ -66,12 +66,18 @@ export async function checkAndIncrementDailyLimit(
   const raw = await kv.get(key);
   const count = raw ? Number(raw) : 0;
   const current = Number.isFinite(count) ? count : 0;
+  return { allowed: current < limit, count: current, limit };
+}
 
-  if (current >= limit) {
-    return { allowed: false, count: current, limit };
-  }
+export async function checkAndIncrementDailyLimit(
+  kv: KVNamespace,
+  ip: string,
+  limit: number
+): Promise<RateLimitCheck> {
+  const status = await readDailyLimitStatus(kv, ip, limit);
+  if (!status.allowed) return status;
 
-  const next = current + 1;
-  await kv.put(key, String(next), { expirationTtl: 86_400 });
+  const next = status.count + 1;
+  await kv.put(dailyLimitKey(ip), String(next), { expirationTtl: 86_400 });
   return { allowed: true, count: next, limit };
 }

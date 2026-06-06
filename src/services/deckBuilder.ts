@@ -3,6 +3,7 @@ import { createDefaultProfile } from "../engine/profile";
 import { rankTitles } from "../engine/scoring";
 import type { AiHistoryHints } from "./ai";
 import { generateSuggestionsWithAi, rerankCandidatesWithAi } from "./ai";
+import { assertCanBuildAiDeck, fetchAiQuota } from "./aiQuota";
 import { loadBackendConfig } from "./backendConfig";
 import { createSyntheticAiTitle, enrichTitlesWithTmdb, resolveAiSuggestionsToTitles } from "./tmdb";
 import { buildDeck, fillDeckFromSources } from "../state/machine";
@@ -46,6 +47,7 @@ export async function buildRecommendationDeck(
   let deckTitles: Title[] = [];
 
   if (aiEnabled) {
+    assertCanBuildAiDeck(await fetchAiQuota());
     const historyHints = buildHistoryHints(catalog, profile);
     const generated = await generateSuggestionsWithAi({
       answers,

@@ -1,4 +1,5 @@
 import type { Title } from "../types";
+import { ApiGateError } from "./apiErrors";
 import { loadBackendConfig } from "./backendConfig";
 import { fetchWithTimeoutAndRetries } from "./aiFetch";
 import {
@@ -112,6 +113,7 @@ async function tryRerankWithModel(input: ModelAttempt): Promise<string[]> {
 
     return validated;
   } catch (error) {
+    if (error instanceof ApiGateError) throw error;
     console.warn(`${AI_LOG} rerank failed model=${input.model}`, error);
     return [];
   }
@@ -163,6 +165,7 @@ async function tryGenerateWithModel(input: GenerateModelAttempt): Promise<AiSugg
 
     return normalizeSuggestions(structured, input.count);
   } catch (error) {
+    if (error instanceof ApiGateError) throw error;
     console.warn(`${AI_LOG} generate failed model=${input.model}`, error);
     return [];
   }

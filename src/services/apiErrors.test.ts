@@ -11,7 +11,7 @@ describe("isOpenAiCompletionsUrl", () => {
 describe("apiGateUserMessage", () => {
   it("maps rate limit errors", () => {
     const msg = apiGateUserMessage(new ApiGateError("x", 429, "rate_limit"));
-    expect(msg).toContain("free AI limit");
+    expect(msg).toContain("deck limit");
   });
 
   it("returns null for unrelated errors", () => {

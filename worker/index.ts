@@ -4,6 +4,7 @@ import {
   checkAndIncrementDailyLimit,
   clientIp,
   parseAiDailyLimit,
+  readDailyLimitStatus,
   turnstileTokenFromRequest,
   verifyTurnstile
 } from "./security";
@@ -83,14 +84,31 @@ interface DoRateResponse {
   limit: number;
 }
 
+function dailyRateLimiterStub(namespace: DurableObjectNamespace, ip: string) {
+  const day = new Date().toISOString().slice(0, 10);
+  const id = namespace.idFromName(`ai:${ip}:${day}`);
+  return namespace.get(id);
+}
+
+async function readDailyLimitStatusViaDo(
+  namespace: DurableObjectNamespace,
+  ip: string,
+  limit: number
+): Promise<DoRateResponse> {
+  const stub = dailyRateLimiterStub(namespace, ip);
+  const response = await stub.fetch(`https://internal/rate/status?limit=${limit}`);
+  if (!response.ok) {
+    throw new Error(`Rate limiter DO failed: HTTP ${response.status}`);
+  }
+  return (await response.json()) as DoRateResponse;
+}
+
 async function checkAndIncrementDailyLimitViaDo(
   namespace: DurableObjectNamespace,
   ip: string,
   limit: number
 ): Promise<DoRateResponse> {
-  const day = new Date().toISOString().slice(0, 10);
-  const id = namespace.idFromName(`ai:${ip}:${day}`);
-  const stub = namespace.get(id);
+  const stub = dailyRateLimiterStub(namespace, ip);
   const response = await stub.fetch("https://internal/rate/increment", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -100,6 +118,19 @@ async function checkAndIncrementDailyLimitViaDo(
     throw new Error(`Rate limiter DO failed: HTTP ${response.status}`);
   }
   return (await response.json()) as DoRateResponse;
+}
+
+async function aiQuotaPayload(env: Env, ip: string) {
+  const limit = parseAiDailyLimit(env.AI_DAILY_LIMIT);
+  if (!env.RATE_LIMITER && !env.RATE_KV) {
+    return { count: 0, limit, remaining: limit, limited: false };
+  }
+
+  const rate = env.RATE_LIMITER
+    ? await readDailyLimitStatusViaDo(env.RATE_LIMITER, ip, limit)
+    : await readDailyLimitStatus(env.RATE_KV!, ip, limit);
+  const remaining = Math.max(0, rate.limit - rate.count);
+  return { count: rate.count, limit: rate.limit, remaining, limited: true };
 }
 
 async function gateOpenAiRequest(request: Request, env: Env): Promise<Response | null> {
@@ -158,6 +189,13 @@ export default {
         aiDailyLimit,
         turnstileRequired: Boolean(env.TURNSTILE_SECRET_KEY)
       });
+    }
+
+    if (url.pathname === "/api/ai-quota" && request.method === "GET") {
+      if (!env.OPENAI_API_KEY) {
+        return json({ error: "OpenAI is not configured" }, 503);
+      }
+      return json(await aiQuotaPayload(env, clientIp(request)));
     }
 
     if (url.pathname === OPENAI_PATH && request.method === "POST") {
@@ -236,40 +274,74 @@ export default {
   }
 } satisfies ExportedHandler<Env>;
 
+function parseDailyRateLimitFromQuery(url: URL): number {
+  const fromQuery = Number(url.searchParams.get("limit"));
+  if (Number.isFinite(fromQuery) && fromQuery >= 1) return Math.floor(fromQuery);
+  return NaN;
+}
+
+async function parseDailyRateLimitFromBody(request: Request): Promise<number> {
+  const payload = (await request.json().catch(() => null)) as { limit?: unknown } | null;
+  const limit = typeof payload?.limit === "number" ? Math.floor(payload.limit) : NaN;
+  return Number.isFinite(limit) && limit >= 1 ? limit : NaN;
+}
+
 export class DailyRateLimiter implements DurableObject {
   private static readonly CLEANUP_DELAY_MS = 26 * 60 * 60 * 1000;
 
   constructor(private readonly state: DurableObjectState) {}
 
   async fetch(request: Request): Promise<Response> {
-    if (request.method !== "POST") {
-      return new Response("Method not allowed", { status: 405 });
-    }
-    const payload = (await request.json().catch(() => null)) as { limit?: unknown } | null;
-    const limit = typeof payload?.limit === "number" ? Math.floor(payload.limit) : NaN;
-    if (!Number.isFinite(limit) || limit < 1) {
-      return new Response(JSON.stringify({ error: "Invalid limit" }), {
-        status: 400,
-        headers: { "content-type": "application/json" }
-      });
+    const url = new URL(request.url);
+    const current = ((await this.state.storage.get<number>("count")) ?? 0) as number;
+
+    if (url.pathname.endsWith("/rate/status")) {
+      if (request.method !== "GET") {
+        return new Response("Method not allowed", { status: 405 });
+      }
+      const limit = parseDailyRateLimitFromQuery(url);
+      if (!Number.isFinite(limit)) {
+        return new Response(JSON.stringify({ error: "Invalid limit" }), {
+          status: 400,
+          headers: { "content-type": "application/json" }
+        });
+      }
+      await this.ensureCleanupAlarm();
+      return new Response(
+        JSON.stringify({ allowed: current < limit, count: current, limit }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      );
     }
 
-    const current = ((await this.state.storage.get<number>("count")) ?? 0) as number;
-    if (current >= limit) {
+    if (url.pathname.endsWith("/rate/increment")) {
+      if (request.method !== "POST") {
+        return new Response("Method not allowed", { status: 405 });
+      }
+      const limit = await parseDailyRateLimitFromBody(request);
+      if (!Number.isFinite(limit)) {
+        return new Response(JSON.stringify({ error: "Invalid limit" }), {
+          status: 400,
+          headers: { "content-type": "application/json" }
+        });
+      }
+      if (current >= limit) {
+        await this.ensureCleanupAlarm();
+        return new Response(JSON.stringify({ allowed: false, count: current, limit }), {
+          status: 200,
+          headers: { "content-type": "application/json" }
+        });
+      }
+
+      const next = current + 1;
+      await this.state.storage.put("count", next);
       await this.ensureCleanupAlarm();
-      return new Response(JSON.stringify({ allowed: false, count: current, limit }), {
+      return new Response(JSON.stringify({ allowed: true, count: next, limit }), {
         status: 200,
         headers: { "content-type": "application/json" }
       });
     }
 
-    const next = current + 1;
-    await this.state.storage.put("count", next);
-    await this.ensureCleanupAlarm();
-    return new Response(JSON.stringify({ allowed: true, count: next, limit }), {
-      status: 200,
-      headers: { "content-type": "application/json" }
-    });
+    return new Response("Not found", { status: 404 });
   }
 
   async alarm(): Promise<void> {

@@ -56,11 +56,13 @@ export function prepareSwipeCandidatePool(
   profile: TasteProfile,
   minViable = DEFAULT_MIN_POOL
 ): Title[] {
+  const rejectedIds = new Set(profile.rejectedIds);
+  const seenIds = new Set(profile.seenIds);
   const constrained = catalog.filter((title) => passesCandidateConstraints(title, answers));
-  const withoutRejected = constrained.filter((title) => !isRejectedTitle(title, profile));
+  const withoutRejected = constrained.filter((title) => !rejectedIds.has(title.id));
   const base = withoutRejected.length > 0 ? withoutRejected : constrained;
 
-  const withoutSeen = base.filter((title) => !isSeenTitle(title, profile));
+  const withoutSeen = base.filter((title) => !seenIds.has(title.id));
   if (withoutSeen.length >= minViable) return withoutSeen;
   return base;
 }

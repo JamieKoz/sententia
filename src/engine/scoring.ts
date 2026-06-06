@@ -34,6 +34,15 @@ const SCORING_WEIGHTS = {
   }
 } as const;
 
+interface ScoringLookup {
+  likedIds: Set<string>;
+  rejectedIds: Set<string>;
+  seenIds: Set<string>;
+  moods: Set<string>;
+  providers: Set<string>;
+  keywordsLower: string[];
+}
+
 export function runtimeBucketFromMinutes(minutes: number): RuntimeBucket {
   if (minutes < 90) return "short";
   if (minutes <= 130) return "standard";
@@ -41,11 +50,21 @@ export function runtimeBucketFromMinutes(minutes: number): RuntimeBucket {
 }
 
 export function scoreCandidate({ title, answers, profile }: ScoreInput): number {
+  const lookup = buildScoringLookup(answers, profile);
+  return scoreCandidateWithLookup(title, answers, profile, lookup);
+}
+
+function scoreCandidateWithLookup(
+  title: Title,
+  answers: OnboardingAnswers,
+  profile: TasteProfile,
+  lookup: ScoringLookup
+): number {
   let score = 0;
 
-  if (profile.rejectedIds.includes(title.id)) return HARD_REJECT_SCORE;
+  if (lookup.rejectedIds.has(title.id)) return HARD_REJECT_SCORE;
 
-  if (profile.likedIds.includes(title.id)) {
+  if (lookup.likedIds.has(title.id)) {
     score += SCORING_WEIGHTS.likedBoost;
   }
 
@@ -60,7 +79,7 @@ export function scoreCandidate({ title, answers, profile }: ScoreInput): number 
     score -= SCORING_WEIGHTS.runtimePenalty;
   }
 
-  if (answers.languages?.length && !answers.languages.includes(title.language)) {
+  if (answers.languages.length > 0 && !answers.languages.includes(title.language)) {
     score -= SCORING_WEIGHTS.languagePenalty;
   }
 
@@ -70,27 +89,27 @@ export function scoreCandidate({ title, answers, profile }: ScoreInput): number 
 
   if (!matchesCustomYearRange(title.releaseYear, answers.customYearRange)) return HARD_REJECT_SCORE;
 
-  if (answers.moods?.length && title.moods.some((mood) => answers.moods?.includes(mood))) {
+  if (lookup.moods.size > 0 && title.moods.some((mood) => lookup.moods.has(mood))) {
     score += SCORING_WEIGHTS.moodMatchBoost;
   }
 
-  if (answers.keywords?.length) {
+  if (lookup.keywordsLower.length > 0) {
     const searchable = [title.name, title.overview, ...title.genres, ...title.moods].join(" ").toLowerCase();
-    for (const keyword of answers.keywords) {
-      if (searchable.includes(keyword.toLowerCase())) {
+    for (const keyword of lookup.keywordsLower) {
+      if (searchable.includes(keyword)) {
         score += SCORING_WEIGHTS.keywordBoost;
       }
     }
   }
 
-  if (answers.providers?.length) {
-    const matchesProvider = title.providers.some((provider) => answers.providers?.includes(provider));
+  if (lookup.providers.size > 0) {
+    const matchesProvider = title.providers.some((provider) => lookup.providers.has(provider));
     if (matchesProvider) score += SCORING_WEIGHTS.providerMatchBoost;
   }
 
   score += affinityScore(title, profile, bucket);
 
-  if (profile.seenIds.includes(title.id)) {
+  if (lookup.seenIds.has(title.id)) {
     score -= SCORING_WEIGHTS.seenPenalty;
   }
 
@@ -125,11 +144,25 @@ export function scoreCandidate({ title, answers, profile }: ScoreInput): number 
 }
 
 export function rankTitles(titles: Title[], answers: OnboardingAnswers, profile: TasteProfile): Title[] {
-  return [...titles].sort((a, b) => {
-    const aScore = scoreCandidate({ title: a, answers, profile });
-    const bScore = scoreCandidate({ title: b, answers, profile });
-    return bScore - aScore;
-  });
+  const lookup = buildScoringLookup(answers, profile);
+  return titles
+    .map((title) => ({
+      title,
+      score: scoreCandidateWithLookup(title, answers, profile, lookup)
+    }))
+    .sort((a, b) => b.score - a.score)
+    .map((entry) => entry.title);
+}
+
+function buildScoringLookup(answers: OnboardingAnswers, profile: TasteProfile): ScoringLookup {
+  return {
+    likedIds: new Set(profile.likedIds),
+    rejectedIds: new Set(profile.rejectedIds),
+    seenIds: new Set(profile.seenIds),
+    moods: new Set(answers.moods),
+    providers: new Set(answers.providers),
+    keywordsLower: answers.keywords.map((keyword) => keyword.toLowerCase())
+  };
 }
 
 function normalizeRecency(year: number): number {

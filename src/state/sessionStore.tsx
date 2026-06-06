@@ -50,22 +50,37 @@ export function SessionStoreProvider({ children }: { children: ReactNode }) {
   const backup = session.backupId ? titlesById.get(session.backupId) : undefined;
   const isCardFocusedPhase = session.phase === "swipe" || session.phase === "showdown";
 
-  const value: SessionStoreValue = {
-    profile,
-    setProfile,
-    session,
-    setSession,
-    catalog,
-    setCatalog,
-    titlesById,
-    currentTitle,
-    nextSwipeTitle,
-    showdownLeft,
-    showdownRight,
-    winner,
-    backup,
-    isCardFocusedPhase
-  };
+  const value = useMemo<SessionStoreValue>(
+    () => ({
+      profile,
+      setProfile,
+      session,
+      setSession,
+      catalog,
+      setCatalog,
+      titlesById,
+      currentTitle,
+      nextSwipeTitle,
+      showdownLeft,
+      showdownRight,
+      winner,
+      backup,
+      isCardFocusedPhase
+    }),
+    [
+      profile,
+      session,
+      catalog,
+      titlesById,
+      currentTitle,
+      nextSwipeTitle,
+      showdownLeft,
+      showdownRight,
+      winner,
+      backup,
+      isCardFocusedPhase
+    ]
+  );
 
   return <SessionStoreContext.Provider value={value}>{children}</SessionStoreContext.Provider>;
 }

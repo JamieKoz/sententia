@@ -54,15 +54,16 @@ export function loadProfile(): TasteProfile {
     if (parsed.version !== 1) {
       return migrateProfile(parsed);
     }
+    const defaults = createDefaultProfile();
     return {
-      ...createDefaultProfile(),
+      ...defaults,
       ...parsed,
       runtimeAffinity: {
-        ...createDefaultProfile().runtimeAffinity,
+        ...defaults.runtimeAffinity,
         ...(parsed.runtimeAffinity ?? {})
       },
       typeAffinity: {
-        ...createDefaultProfile().typeAffinity,
+        ...defaults.typeAffinity,
         ...(parsed.typeAffinity ?? {})
       }
     };
@@ -121,16 +122,17 @@ export function resetPersonalization(): void {
 
 function migrateProfile(parsed: Partial<TasteProfile>): TasteProfile {
   // v0 or unknown versions: best-effort merge into current defaults.
+  const defaults = createDefaultProfile();
   return {
-    ...createDefaultProfile(),
+    ...defaults,
     ...parsed,
     version: 1,
     runtimeAffinity: {
-      ...createDefaultProfile().runtimeAffinity,
+      ...defaults.runtimeAffinity,
       ...(parsed.runtimeAffinity ?? {})
     },
     typeAffinity: {
-      ...createDefaultProfile().typeAffinity,
+      ...defaults.typeAffinity,
       ...(parsed.typeAffinity ?? {})
     }
   };

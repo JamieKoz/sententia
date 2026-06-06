@@ -29,6 +29,8 @@ let genreLookupPromise: Promise<Map<number, string>> | null = null;
 const searchCache = new Map<string, Promise<TmdbSearchResult[]>>();
 const detailCache = new Map<string, Promise<TmdbDetailSummary | null>>();
 const ENRICH_CONCURRENCY = 4;
+const SEARCH_CACHE_MAX_ENTRIES = 200;
+const DETAIL_CACHE_MAX_ENTRIES = 400;
 
 export async function searchTmdbTitle(query: string): Promise<TmdbSearchResult[]> {
   const key = query.trim().toLowerCase();
@@ -47,7 +49,7 @@ export async function searchTmdbTitle(query: string): Promise<TmdbSearchResult[]
       const data = (await response.json()) as { results?: TmdbSearchResult[] };
       return data.results ?? [];
     })();
-    searchCache.set(key, cached);
+    setWithLimit(searchCache, key, cached, SEARCH_CACHE_MAX_ENTRIES);
   }
   return cached;
 }
@@ -163,79 +165,103 @@ export async function resolveAiSuggestionsToTitles(
 ): Promise<Title[]> {
   if (suggestions.length === 0) return [];
   const genreLookup = await getGenreLookup();
+  const rejectedIds = new Set(profile.rejectedIds);
+  const seenIds = new Set(profile.seenIds);
+
+  const candidates = await mapWithConcurrency(
+    suggestions,
+    ENRICH_CONCURRENCY,
+    (suggestion, index) =>
+      resolveSuggestionToTitle(suggestion, index, {
+        answers,
+        watchRegion,
+        genreLookup,
+        rejectedIds,
+        seenIds
+      })
+  );
+
   const used = new Set<string>();
   const resolved: Title[] = [];
-
-  for (const suggestion of suggestions) {
+  for (const title of candidates) {
+    if (!title || used.has(title.id)) continue;
+    if (!passesAiDeckConstraints(title, answers) || !passesCandidateConstraints(title, answers)) continue;
+    used.add(title.id);
+    resolved.push(title);
     if (resolved.length >= max) break;
+  }
 
-    let picked: Title | null = null;
+  return resolved;
+}
 
-    const results = await searchTmdbTitle(suggestion.name);
-    const match = strictSearchMatch(results, suggestion.name, suggestion.type);
-    if (match && (match.media_type === "movie" || match.media_type === "tv")) {
-      const media = match.media_type;
-      const id = `tmdb-${media}-${match.id}`;
-      if (!used.has(id) && !profile.rejectedIds.includes(id) && !profile.seenIds.includes(id)) {
-        const details = await fetchTmdbDetails(media, match.id, watchRegion);
-        const year = parseYear(match.release_date ?? match.first_air_date);
-        const regionalProviders =
-          details?.providers ?? (await fetchWatchProvidersForTmdbId(media, match.id, watchRegion));
-        const genresFromSearch = (match.genre_ids ?? []).map((gid) => genreLookup.get(gid)).filter((name): name is string => Boolean(name));
-        const genres = details?.genres?.length ? details.genres : genresFromSearch;
-        const resolvedType: TitleType = media === "tv" ? "series" : "movie";
-        const runtimeMinutes = details?.runtimeMinutes ?? (resolvedType === "series" ? 45 : 110);
-        const displayName = (match.title ?? match.name ?? suggestion.name).trim();
+async function resolveSuggestionToTitle(
+  suggestion: AiSuggestedTitle,
+  index: number,
+  context: {
+    answers: OnboardingAnswers;
+    watchRegion: string;
+    genreLookup: Map<number, string>;
+    rejectedIds: Set<string>;
+    seenIds: Set<string>;
+  }
+): Promise<Title | null> {
+  const { answers, watchRegion, genreLookup, rejectedIds, seenIds } = context;
+  const results = await searchTmdbTitle(suggestion.name);
+  const match = strictSearchMatch(results, suggestion.name, suggestion.type);
+  let picked: Title | null = null;
 
-        const title: Title = {
-          id,
-          name: displayName,
-          type: resolvedType,
-          runtimeMinutes: runtimeMinutes ?? (resolvedType === "series" ? 45 : 110),
-          genres: genres.length ? genres : [],
-          moods: [...(answers.moods ?? [])],
-          language: answers.languages?.[0] ?? "en",
-          providers: resolveTitleProviders(regionalProviders, answers.providers ?? [], true),
-          popularity: typeof match.vote_average === "number" ? Math.min(1, match.vote_average / 10) : 0.55,
-          releaseYear: year ?? new Date().getFullYear(),
-          posterPath: details?.posterPath ?? match.poster_path ?? null,
-          overview: details?.overview?.trim() || match.overview?.trim() || suggestion.reason?.trim() || "",
-          rating: details?.voteAverage ?? match.vote_average,
-          cast: details?.cast
-        };
+  if (match && (match.media_type === "movie" || match.media_type === "tv")) {
+    const media = match.media_type;
+    const id = `tmdb-${media}-${match.id}`;
+    if (!rejectedIds.has(id) && !seenIds.has(id)) {
+      const details = await fetchTmdbDetails(media, match.id, watchRegion);
+      const year = parseYear(match.release_date ?? match.first_air_date);
+      const regionalProviders =
+        details?.providers ?? (await fetchWatchProvidersForTmdbId(media, match.id, watchRegion));
+      const genresFromSearch = (match.genre_ids ?? [])
+        .map((gid) => genreLookup.get(gid))
+        .filter((name): name is string => Boolean(name));
+      const genres = details?.genres?.length ? details.genres : genresFromSearch;
+      const resolvedType: TitleType = media === "tv" ? "series" : "movie";
+      const displayName = (match.title ?? match.name ?? suggestion.name).trim();
 
-        if (passesAiDeckConstraints(title, answers)) {
-          picked = title;
-        }
-      }
-    }
-
-    if (!picked) {
-      const syn = createSyntheticAiTitle(suggestion, answers, resolved.length);
-      if (passesAiDeckConstraints(syn, answers) && !used.has(syn.id)) {
-        const posterHint = findBestMatch(results, syn);
-        picked = {
-          ...syn,
-          posterPath: posterHint?.poster_path ?? syn.posterPath ?? null,
-          releaseYear: parseYear(posterHint?.release_date ?? posterHint?.first_air_date) ?? syn.releaseYear
-        };
-      }
-    } else if (!picked.posterPath) {
-      const posterHint = findBestMatch(results, picked);
-      if (posterHint?.poster_path) {
-        picked = { ...picked, posterPath: posterHint.poster_path };
-      }
-    }
-
-    if (picked && !used.has(picked.id)) {
-      used.add(picked.id);
-      resolved.push(picked);
+      picked = {
+        id,
+        name: displayName,
+        type: resolvedType,
+        runtimeMinutes: details?.runtimeMinutes ?? (resolvedType === "series" ? 45 : 110),
+        genres: genres.length ? genres : [],
+        moods: [...answers.moods],
+        language: answers.languages[0] ?? "en",
+        providers: resolveTitleProviders(regionalProviders, answers.providers, true),
+        popularity: typeof match.vote_average === "number" ? Math.min(1, match.vote_average / 10) : 0.55,
+        releaseYear: year ?? new Date().getFullYear(),
+        posterPath: details?.posterPath ?? match.poster_path ?? null,
+        overview: details?.overview?.trim() || match.overview?.trim() || suggestion.reason?.trim() || "",
+        rating: details?.voteAverage ?? match.vote_average,
+        cast: details?.cast
+      };
     }
   }
 
-  return resolved.filter(
-    (title) => passesAiDeckConstraints(title, answers) && passesCandidateConstraints(title, answers)
-  );
+  if (!picked) {
+    const synthetic = createSyntheticAiTitle(suggestion, answers, index);
+    if (passesAiDeckConstraints(synthetic, answers)) {
+      const posterHint = findBestMatch(results, synthetic);
+      picked = {
+        ...synthetic,
+        posterPath: posterHint?.poster_path ?? synthetic.posterPath ?? null,
+        releaseYear: parseYear(posterHint?.release_date ?? posterHint?.first_air_date) ?? synthetic.releaseYear
+      };
+    }
+  } else if (!picked.posterPath) {
+    const posterHint = findBestMatch(results, picked);
+    if (posterHint?.poster_path) {
+      picked = { ...picked, posterPath: posterHint.poster_path };
+    }
+  }
+
+  return picked;
 }
 
 function findBestMatch(results: TmdbSearchResult[], title: Title): TmdbSearchResult | null {
@@ -348,7 +374,7 @@ async function fetchTmdbDetails(
     };
   })();
 
-  detailCache.set(cacheKey, task);
+  setWithLimit(detailCache, cacheKey, task, DETAIL_CACHE_MAX_ENTRIES);
   return task;
 }
 
@@ -404,4 +430,13 @@ async function mapWithConcurrency<T, R>(
 
   await Promise.all(Array.from({ length: size }, () => worker()));
   return out;
+}
+
+function setWithLimit<K, V>(map: Map<K, V>, key: K, value: V, maxEntries: number): void {
+  map.set(key, value);
+  if (map.size <= maxEntries) return;
+  const firstKey = map.keys().next().value as K | undefined;
+  if (firstKey !== undefined) {
+    map.delete(firstKey);
+  }
 }

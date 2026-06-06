@@ -1,4 +1,5 @@
 import { TitleCard } from "./TitleCard";
+import { useSwipeGesture } from "../hooks/useSwipeGesture";
 import type { Title } from "../types";
 
 /** Next card only appears while the user is dragging the top card aside (not at rest). */
@@ -10,16 +11,8 @@ export function SwipeSection(props: {
   deckCursor: number;
   deckLength: number;
   shortlistLength: number;
-  isDraggingCard: boolean;
-  swipeDeltaX: number;
-  passOverlayOpacity: number;
-  keepOverlayOpacity: number;
   canUndo: boolean;
   shareFeedback: string | null;
-  onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
-  onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
-  onPointerUp: () => void;
-  onPointerCancel: () => void;
   onPass: () => void;
   onKeep: () => void;
   onUndo: () => void;
@@ -31,21 +24,26 @@ export function SwipeSection(props: {
     deckCursor,
     deckLength,
     shortlistLength,
-    isDraggingCard,
-    swipeDeltaX,
-    passOverlayOpacity,
-    keepOverlayOpacity,
     canUndo,
     shareFeedback,
-    onPointerDown,
-    onPointerMove,
-    onPointerUp,
-    onPointerCancel,
     onPass,
     onKeep,
     onUndo,
     onShare
   } = props;
+  const {
+    swipeDeltaX,
+    isDraggingCard,
+    passOverlayOpacity,
+    keepOverlayOpacity,
+    onSwipePointerDown,
+    onSwipePointerMove,
+    onSwipePointerEnd
+  } = useSwipeGesture({
+    currentTitleId: currentTitle.id,
+    onSwipeKeep: onKeep,
+    onSwipePass: onPass
+  });
 
   const showBehindCard = Boolean(
     nextSwipeTitle && isDraggingCard && Math.abs(swipeDeltaX) >= SWIPE_PEEK_THRESHOLD_PX
@@ -81,10 +79,10 @@ export function SwipeSection(props: {
               transform: `translateX(${swipeDeltaX}px) rotate(${swipeDeltaX * 0.06}deg)`
             }}
             onDragStart={(event) => event.preventDefault()}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerCancel}
+            onPointerDown={onSwipePointerDown}
+            onPointerMove={onSwipePointerMove}
+            onPointerUp={onSwipePointerEnd}
+            onPointerCancel={onSwipePointerEnd}
           >
             <div
               className="pointer-events-none absolute inset-0 bg-rose-300/20 transition-opacity"

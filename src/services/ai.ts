@@ -14,7 +14,7 @@ import type { AiGenerateRequest, AiRerankRequest, AiSuggestedTitle } from "./aiT
 export type { AiGenerateRequest, AiHistoryHints, AiRerankRequest, AiSuggestedTitle } from "./aiTypes";
 
 const OPENAI_COMPLETIONS_URL = "/api/openai/chat/completions";
-const AI_LOG = "[couchpicks-ai]";
+const AI_LOG = "[couchpick-ai]";
 
 export async function rerankCandidatesWithAi(req: AiRerankRequest): Promise<Title[]> {
   const config = await getAiRuntime();

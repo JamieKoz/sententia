@@ -237,6 +237,8 @@ export default {
 } satisfies ExportedHandler<Env>;
 
 export class DailyRateLimiter implements DurableObject {
+  private static readonly CLEANUP_DELAY_MS = 26 * 60 * 60 * 1000;
+
   constructor(private readonly state: DurableObjectState) {}
 
   async fetch(request: Request): Promise<Response> {
@@ -254,6 +256,7 @@ export class DailyRateLimiter implements DurableObject {
 
     const current = ((await this.state.storage.get<number>("count")) ?? 0) as number;
     if (current >= limit) {
+      await this.ensureCleanupAlarm();
       return new Response(JSON.stringify({ allowed: false, count: current, limit }), {
         status: 200,
         headers: { "content-type": "application/json" }
@@ -262,9 +265,21 @@ export class DailyRateLimiter implements DurableObject {
 
     const next = current + 1;
     await this.state.storage.put("count", next);
+    await this.ensureCleanupAlarm();
     return new Response(JSON.stringify({ allowed: true, count: next, limit }), {
       status: 200,
       headers: { "content-type": "application/json" }
     });
+  }
+
+  async alarm(): Promise<void> {
+    await this.state.storage.deleteAll();
+  }
+
+  private async ensureCleanupAlarm(): Promise<void> {
+    const existing = await this.state.storage.getAlarm();
+    if (existing === null) {
+      await this.state.storage.setAlarm(Date.now() + DailyRateLimiter.CLEANUP_DELAY_MS);
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { THUMBNAIL_PATHS } from "../data/thumbnailManifest";
 
 const ROW_COUNT = 7;
@@ -28,7 +28,13 @@ type ThumbnailRowProps = {
   scrollOffset: number;
 };
 
-function ThumbnailRow({ images, reverse, durationSec, depth, scrollOffset }: ThumbnailRowProps) {
+const ThumbnailRow = memo(function ThumbnailRow({
+  images,
+  reverse,
+  durationSec,
+  depth,
+  scrollOffset
+}: ThumbnailRowProps) {
   const loop = [...images, ...images];
 
   return (
@@ -57,18 +63,30 @@ function ThumbnailRow({ images, reverse, durationSec, depth, scrollOffset }: Thu
       </div>
     </div>
   );
-}
+});
 
 export function ThumbnailBackdrop() {
-  const [scrollY, setScrollY] = useState(0);
+  const [scrollY, setScrollY] = useState(() => (typeof window === "undefined" ? 0 : window.scrollY));
+  const frameRef = useRef<number | null>(null);
 
   const rows = useMemo(() => buildRows(THUMBNAIL_PATHS, ROW_COUNT), []);
 
   useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
-    onScroll();
+    const onScroll = () => {
+      if (frameRef.current !== null) return;
+      frameRef.current = window.requestAnimationFrame(() => {
+        frameRef.current = null;
+        setScrollY(window.scrollY);
+      });
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+    };
   }, []);
 
   return (

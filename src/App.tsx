@@ -10,7 +10,6 @@ import { createDefaultProfile } from "./engine/profile";
 import { useQuickSetup } from "./hooks/useQuickSetup";
 import { useShareCurrentTitle } from "./hooks/useShareCurrentTitle";
 import { useSessionFlow } from "./hooks/useSessionFlow";
-import { useSwipeGesture } from "./hooks/useSwipeGesture";
 import { openWatchUrl } from "./services/affiliate";
 import { loadBackendConfig } from "./services/backendConfig";
 import {
@@ -69,26 +68,10 @@ export function App() {
     resetAndStartNewRound
   } = useSessionFlow({ watchRegion: viewerPrefs.watchRegion });
 
-  const {
-    swipeDeltaX,
-    isDraggingCard,
-    passOverlayOpacity,
-    keepOverlayOpacity,
-    onSwipePointerDown,
-    onSwipePointerMove,
-    onSwipePointerEnd,
-    resetSwipeGesture
-  } = useSwipeGesture({
-    currentTitleId: currentTitle?.id,
-    onSwipeKeep: () => handleSwipe("keep"),
-    onSwipePass: () => handleSwipe("pass")
-  });
-
   const { shareFeedback, handleShareCurrentTitle } = useShareCurrentTitle(currentTitle);
 
   function handleUndoSwipe() {
     undoSwipeSessionState();
-    resetSwipeGesture();
   }
 
   useEffect(() => {
@@ -196,16 +179,8 @@ export function App() {
             deckCursor={session.deckCursor}
             deckLength={session.deck.length}
             shortlistLength={session.shortlist.length}
-            isDraggingCard={isDraggingCard}
-            swipeDeltaX={swipeDeltaX}
-            passOverlayOpacity={passOverlayOpacity}
-            keepOverlayOpacity={keepOverlayOpacity}
             canUndo={canUndo}
             shareFeedback={shareFeedback}
-            onPointerDown={onSwipePointerDown}
-            onPointerMove={onSwipePointerMove}
-            onPointerUp={onSwipePointerEnd}
-            onPointerCancel={onSwipePointerEnd}
             onPass={() => handleSwipe("pass")}
             onKeep={() => handleSwipe("keep")}
             onUndo={handleUndoSwipe}

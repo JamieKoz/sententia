@@ -14,7 +14,7 @@ export function ShowdownChoiceCard({
   return (
     <div className="rounded-2xl p-2 sm:p-3">
       <button
-        className="mx-auto block w-full max-w-[140px] sm:max-w-[170px] overflow-hidden rounded-xl border border-transparent bg-zinc-800/70 aspect-[2/3] transition hover:border-emerald-300/70 hover:shadow-lg hover:shadow-emerald-900/35"
+        className="mx-auto block w-full max-w-[140px] sm:max-w-[170px] overflow-hidden rounded-xl border border-transparent bg-zinc-800/70 aspect-[2/3] transition hover:border-violet-300/70 hover:shadow-lg hover:shadow-violet-900/35"
         onClick={onPick}
         aria-label={`Pick ${title.name}`}
       >
@@ -29,7 +29,7 @@ export function ShowdownChoiceCard({
       </p>
       <div className="mt-2 grid gap-2">
         <button
-          className="rounded-full border border-emerald-300/65 bg-emerald-900/35 px-3 py-1.5 text-xs text-emerald-200 transition hover:bg-emerald-800/55"
+          className="rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-3 py-1.5 text-xs font-medium text-white shadow-lg shadow-violet-900/35 transition hover:brightness-110"
           onClick={onPick}
         >
           Pick this

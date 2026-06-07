@@ -26,7 +26,8 @@ type OnboardingStep =
   | "provider"
   | "avoid"
   | "keywords"
-  | "review";
+  | "review"
+  | "watchMode";
 
 type TransitionDirection = "forward" | "back";
 
@@ -42,7 +43,8 @@ const STEP_ORDER: OnboardingStep[] = [
   "provider",
   "avoid",
   "keywords",
-  "review"
+  "review",
+  "watchMode"
 ];
 
 function stepIndex(step: OnboardingStep) {
@@ -74,8 +76,21 @@ function StepFrame({
   footer?: ReactNode;
   children: ReactNode;
 }) {
+  const totalQuestionSteps = STEP_ORDER.length - 1;
+  const currentQuestionStep = stepIndex(step);
+  const progressPercent = Math.min(100, Math.max(0, (currentQuestionStep / totalQuestionSteps) * 100));
+
   return (
     <section key={step} className={`onboarding-step onboarding-step--${direction} onboarding-step--stacked`}>
+      <div className="onboarding-progress" role="status" aria-live="polite" aria-label={`Step ${currentQuestionStep} of ${totalQuestionSteps}`}>
+        <div className="onboarding-progress__meta">
+          <span>Step {currentQuestionStep}</span>
+          <span>of {totalQuestionSteps}</span>
+        </div>
+        <div className="onboarding-progress__track" aria-hidden="true">
+          <span className="onboarding-progress__fill" style={{ width: `${progressPercent}%` }} />
+        </div>
+      </div>
       <div className="mb-6 text-center sm:mb-8">
         <h2 className="text-xl font-semibold tracking-tight text-white sm:text-2xl md:text-3xl">{title}</h2>
         {subtitle ? <p className="mt-2 text-sm text-zinc-300 sm:text-base">{subtitle}</p> : null}
@@ -126,7 +141,8 @@ export function QuestionsSection(props: {
   viewerPrefs: ViewerPrefs;
   onWatchRegionChange: (watchRegion: string) => void;
   onClearCache: () => void;
-  onStart: () => void;
+  onStartSolo: () => void;
+  onStartGroup: () => void;
 }) {
   const {
     answers,
@@ -145,13 +161,15 @@ export function QuestionsSection(props: {
     viewerPrefs,
     onWatchRegionChange,
     onClearCache,
-    onStart
+    onStartSolo,
+    onStartGroup
   } = props;
 
   const customYearRange = answers.customYearRange;
   const [step, setStep] = useState<OnboardingStep>("welcome");
   const [direction, setDirection] = useState<TransitionDirection>("forward");
   const [keywordsDraft, setKeywordsDraft] = useState((answers.keywords ?? []).join(", "));
+  const [watchMode, setWatchMode] = useState<"solo" | "group" | null>(null);
 
   useEffect(() => {
     setKeywordsDraft((answers.keywords ?? []).join(", "));
@@ -187,24 +205,36 @@ export function QuestionsSection(props: {
     setKeywordsDraft(normalizedKeywords.join(", "));
   }
 
-  function handleStart() {
-    commitKeywords(keywordsDraft);
-    onStart();
-  }
-
   const canAdvanceFromMood = (answers.moods?.length ?? 0) > 0;
-  const isLastStep = step === "review";
+  const isLastStep = step === "watchMode";
+  const isWatchModeStep = step === "watchMode";
+
+  async function handleWatchModeNext() {
+    if (watchMode === "solo") {
+      onStartSolo();
+      return;
+    }
+    if (watchMode === "group") {
+      onStartGroup();
+    }
+  }
 
   const stepNav = (
     <div className="onboarding-nav flex items-center justify-center gap-3">
       <NavButton onClick={goBack}>Back</NavButton>
       {isLastStep ? (
-        <NavButton variant="primary" onClick={handleStart} disabled={isBuildingDeck}>
-          {isBuildingDeck ? "Building your deck…" : "Start"}
+        <NavButton
+          variant="primary"
+          onClick={() => {
+            void handleWatchModeNext();
+          }}
+          disabled={!watchMode || isBuildingDeck}
+        >
+          {isBuildingDeck ? "Loading…" : "Next"}
         </NavButton>
       ) : (
         <NavButton variant="primary" onClick={goNext} disabled={step === "mood" && !canAdvanceFromMood}>
-          Next
+          {step === "review" ? "Continue" : "Next"}
         </NavButton>
       )}
     </div>
@@ -453,6 +483,49 @@ export function QuestionsSection(props: {
               footer={stepNav}
             >
               <OnboardingSummary answers={answers} watchRegion={viewerPrefs.watchRegion} />
+            </StepFrame>
+          ) : null}
+
+          {step === "watchMode" ? (
+            <StepFrame
+              step="watchMode"
+              direction={direction}
+              title="Watching solo or with someone?"
+              subtitle="Choose solo for the current flow, or group to create a shareable room."
+            >
+              <div className="mx-auto grid w-full max-w-3xl gap-3 sm:grid-cols-2 sm:gap-4">
+                <button
+                  type="button"
+                  className={
+                    watchMode === "solo"
+                      ? "onboarding-choice-card onboarding-choice-card--tall onboarding-choice-card--selected"
+                      : "onboarding-choice-card onboarding-choice-card--tall"
+                  }
+                  onClick={() => setWatchMode("solo")}
+                  aria-pressed={watchMode === "solo"}
+                >
+                  <span className="text-xl font-semibold text-white sm:text-2xl">Solo</span>
+                  <span className="mt-2 text-sm text-zinc-300">
+                    Build your personal deck and pick tonight&apos;s winner as usual.
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className={
+                    watchMode === "group"
+                      ? "onboarding-choice-card onboarding-choice-card--tall onboarding-choice-card--selected"
+                      : "onboarding-choice-card onboarding-choice-card--tall"
+                  }
+                  onClick={() => setWatchMode("group")}
+                  aria-pressed={watchMode === "group"}
+                >
+                  <span className="text-xl font-semibold text-white sm:text-2xl">Group</span>
+                  <span className="mt-2 text-sm text-zinc-300">
+                    Create a room and share a link so you both swipe the same deck.
+                  </span>
+                </button>
+              </div>
+              <div className="mt-6">{isWatchModeStep ? stepNav : null}</div>
             </StepFrame>
           ) : null}
         </div>

@@ -24,6 +24,14 @@ preview_id = "d29d5a57fa484536bb1637389357f95b"
 name = "RATE_LIMITER"
 class_name = "DailyRateLimiter"
 
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "GroupRoomCoordinator"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["DailyRateLimiter"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["GroupRoomCoordinator"]

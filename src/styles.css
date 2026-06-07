@@ -240,6 +240,38 @@ body {
   text-align: center;
 }
 
+.onboarding-progress {
+  width: 100%;
+  max-width: 22rem;
+  margin: 0 auto 1rem;
+}
+
+.onboarding-progress__meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #a1a1aa;
+}
+
+.onboarding-progress__track {
+  width: 100%;
+  height: 0.38rem;
+  border-radius: 9999px;
+  background: rgba(63, 63, 70, 0.85);
+  overflow: hidden;
+}
+
+.onboarding-progress__fill {
+  display: block;
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.95), rgba(217, 70, 239, 0.85));
+  transition: width 0.25s ease;
+}
+
 .onboarding-choice-card {
   display: flex;
   min-height: 8.5rem;

@@ -56,6 +56,19 @@ export function applyDecisionSignal(profile: TasteProfile, winner: Title): Taste
   return next;
 }
 
+export function applyWatchedSignal(profile: TasteProfile, title: Title, rating: number): TasteProfile {
+  const next = cloneProfile(profile);
+  const normalized = Math.max(1, Math.min(5, Math.round(rating)));
+  const delta = normalized - 3;
+  if (delta !== 0) {
+    adjustTitleSignals(next, title, delta);
+  }
+  next.seenIds = pushCapped(next.seenIds, title.id);
+  next.lastChosenTitle = title.id;
+  touch(next);
+  return next;
+}
+
 function adjustTitleSignals(profile: TasteProfile, title: Title, delta: number): void {
   for (const genre of title.genres) {
     profile.genreAffinity[genre] = clamp((profile.genreAffinity[genre] ?? 0) + delta * 0.5);

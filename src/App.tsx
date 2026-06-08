@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AppHeader } from "./components/AppHeader";
+import { LibraryPanel } from "./components/LibraryPanel";
 import { ThumbnailBackdrop } from "./components/ThumbnailBackdrop";
 import { QuestionsSection } from "./components/QuestionsSection";
 import { ResultSection } from "./components/ResultSection";
@@ -7,22 +8,34 @@ import { GroupResultSection } from "./components/GroupResultSection";
 import { ShowdownDetailsModal } from "./components/ShowdownDetailsModal";
 import { ShowdownSection } from "./components/ShowdownSection";
 import { SwipeSection } from "./components/SwipeSection";
-import { createDefaultProfile } from "./engine/profile";
+import { applyWatchedSignal, createDefaultProfile } from "./engine/profile";
 import { useQuickSetup } from "./hooks/useQuickSetup";
 import { useShareCurrentTitle } from "./hooks/useShareCurrentTitle";
 import { useGroupSessionFlow } from "./hooks/useGroupSessionFlow";
 import { useSessionFlow } from "./hooks/useSessionFlow";
-import { openWatchUrl } from "./services/affiliate";
+import { openTrailerUrl, openWatchUrl } from "./services/affiliate";
 import { loadBackendConfig } from "./services/backendConfig";
+import { buildWhyThisPick } from "./services/personalizationInsights";
+import {
+  loadGroupHistory,
+  loadSavedPicks,
+  loadWatchedTitles,
+  markTitleWatched,
+  resetPersonalization,
+  saveProfile,
+  toggleSavedPick,
+  updateWatchedRating,
+  upsertGroupHistory
+} from "./services/storage";
 import {
   bootstrapViewerPrefs,
   loadViewerPrefs,
   saveViewerPrefs,
   setManualWatchRegion
 } from "./services/viewerPrefs";
-import { resetPersonalization, saveProfile } from "./services/storage";
 import type { Title, ViewerPrefs } from "./types";
 import { useSessionStore } from "./state/sessionStore";
+import { TasteProfileCard } from "./components/TasteProfileCard";
 
 export function App() {
   const {
@@ -44,6 +57,12 @@ export function App() {
     return loadViewerPrefs();
   });
   const [showdownDetailsTitle, setShowdownDetailsTitle] = useState<Title | null>(null);
+  const [showTastePanel, setShowTastePanel] = useState(false);
+  const [showLibraryPanel, setShowLibraryPanel] = useState(false);
+  const [savedPicks, setSavedPicks] = useState(() => loadSavedPicks());
+  const [watchedTitles, setWatchedTitles] = useState(() => loadWatchedTitles());
+  const [groupHistory, setGroupHistory] = useState(() => loadGroupHistory());
+  const recordedRoomCodesRef = useRef<Set<string>>(new Set());
   const [roomShareFeedback, setRoomShareFeedback] = useState<string | null>(null);
 
   const {
@@ -141,6 +160,7 @@ export function App() {
   function handleResetPersonalization() {
     resetPersonalization();
     setProfile(createDefaultProfile());
+    refreshLibrary();
     void bootstrapViewerPrefs().then(setViewerPrefs);
   }
 
@@ -154,6 +174,11 @@ export function App() {
     openWatchUrl(winner, viewerPrefs.watchRegion);
   }
 
+  function handleWatchTrailer(title: Title) {
+    if (typeof window === "undefined") return;
+    openTrailerUrl(title);
+  }
+
   async function handleStartGroup() {
     await groupFlow.startHostedGroupRound({
       answers: session.answers
@@ -162,6 +187,56 @@ export function App() {
 
   const showGroupFlow = groupFlow.state.phase !== "idle";
   const groupWaitingStatus = groupFlow.state.status;
+  const savedIds = useMemo(() => new Set(savedPicks.map((entry) => entry.title.id)), [savedPicks]);
+  const watchedById = useMemo(
+    () => new Map(watchedTitles.map((entry) => [entry.title.id, entry])),
+    [watchedTitles]
+  );
+  const winnerReasons = winner ? buildWhyThisPick(winner, session.answers, profile) : [];
+  const sharedCompromiseReasons =
+    groupFlow.sharedCompromise ? buildWhyThisPick(groupFlow.sharedCompromise, session.answers, profile) : [];
+
+  function refreshLibrary() {
+    setSavedPicks(loadSavedPicks());
+    setWatchedTitles(loadWatchedTitles());
+    setGroupHistory(loadGroupHistory());
+  }
+
+  function openTastePage() {
+    setShowTastePanel(true);
+    setShowLibraryPanel(false);
+  }
+
+  function openLibraryPage() {
+    setShowLibraryPanel(true);
+    setShowTastePanel(false);
+  }
+
+  function closeUtilityPage() {
+    setShowTastePanel(false);
+    setShowLibraryPanel(false);
+  }
+
+  function handleToggleSave(title: Title, source: "solo" | "group") {
+    toggleSavedPick(title, source);
+    refreshLibrary();
+  }
+
+  function handleMarkWatched(title: Title, source: "solo" | "group") {
+    const existing = watchedById.get(title.id);
+    const nextRating = existing?.rating ?? 4;
+    markTitleWatched(title, { source, rating: nextRating });
+    setProfile((prev) => applyWatchedSignal(prev, title, nextRating));
+    refreshLibrary();
+  }
+
+  function handleWatchedRating(titleId: string, rating: number) {
+    const updated = updateWatchedRating(titleId, rating);
+    if (updated) {
+      setProfile((prev) => applyWatchedSignal(prev, updated.title, rating));
+      refreshLibrary();
+    }
+  }
 
   useEffect(() => {
     if (!showGroupFlow) return;
@@ -196,6 +271,32 @@ export function App() {
     if (!groupFlow.compromisePick) return;
     void groupFlow.shareCompromisePick();
   }, [groupFlow.state.phase, groupFlow.compromisePick?.id]);
+
+  useEffect(() => {
+    if (groupFlow.state.phase !== "result") return;
+    const roomCode = groupFlow.state.roomCode;
+    if (!roomCode || recordedRoomCodesRef.current.has(roomCode)) return;
+    if (!groupFlow.myPick && !groupFlow.partnerPick && !groupFlow.sharedCompromise) return;
+    upsertGroupHistory({
+      roomCode,
+      recordedAt: new Date().toISOString(),
+      myPick: groupFlow.myPick,
+      partnerPick: groupFlow.partnerPick,
+      sharedCompromise: groupFlow.sharedCompromise,
+      overlapTitles: groupFlow.state.mutualMatchIds
+        .map((id) => groupFlow.state.deck.find((title) => title.id === id))
+        .filter((title): title is Title => Boolean(title))
+    });
+    recordedRoomCodesRef.current.add(roomCode);
+    refreshLibrary();
+  }, [
+    groupFlow.state.phase,
+    groupFlow.state.roomCode,
+    groupFlow.myPick?.id,
+    groupFlow.partnerPick?.id,
+    groupFlow.sharedCompromise?.id,
+    groupFlow.state.mutualMatchIds.join("|")
+  ]);
 
   useEffect(() => {
     if (!roomShareFeedback) return;
@@ -233,7 +334,7 @@ export function App() {
     try {
       if (typeof navigator !== "undefined" && "share" in navigator) {
         await navigator.share({
-          title: "Join my CouchPick room",
+          title: "Join my Sententia room",
           text: inviteText,
           url: shareUrl
         });
@@ -262,7 +363,74 @@ export function App() {
           />
         ) : null}
 
-        {session.phase === "questions" && !showGroupFlow ? (
+        {session.phase === "questions" && !showGroupFlow && (showTastePanel || showLibraryPanel) ? (
+          <section className="utility-page-shell mx-auto max-w-3xl rounded-3xl border border-white/20 bg-zinc-950/45 p-5 shadow-2xl backdrop-blur-lg">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                  {showTastePanel ? "Taste profile" : "Your library"}
+                </h2>
+                <p className="mt-1 text-sm text-zinc-300">
+                  {showTastePanel
+                    ? "How your swipes are shaping recommendations."
+                    : "Saved picks, watched ratings, and movie-night history."}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="rounded-full border border-white/30 bg-zinc-900/60 px-4 py-2 text-sm transition hover:border-white/50 hover:bg-zinc-800/75"
+                onClick={closeUtilityPage}
+              >
+                Back
+              </button>
+            </div>
+            <div className="mb-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition ${showTastePanel
+                    ? "border-violet-300/60 bg-violet-500/20 text-violet-100"
+                    : "border-white/20 bg-zinc-900/60 text-zinc-200 hover:border-white/40"
+                  }`}
+                onClick={openTastePage}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                  <path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2m1 5h-2v6l5.25 3.15 1-1.64-4.25-2.51Z" />
+                </svg>
+                Taste
+              </button>
+              <button
+                type="button"
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition ${showLibraryPanel
+                    ? "border-violet-300/60 bg-violet-500/20 text-violet-100"
+                    : "border-white/20 bg-zinc-900/60 text-zinc-200 hover:border-white/40"
+                  }`}
+                onClick={openLibraryPage}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                  <path fill="currentColor" d="M5 3h14a2 2 0 0 1 2 2v14l-4-2-4 2-4-2-4 2V5a2 2 0 0 1 2-2" />
+                </svg>
+                Library
+              </button>
+            </div>
+
+            <div key={showTastePanel ? "taste" : "library"} className="utility-page-panel">
+              {showTastePanel ? (
+                <TasteProfileCard profile={profile} savedCount={savedPicks.length} watchedCount={watchedTitles.length} />
+              ) : (
+                <LibraryPanel
+                  saved={savedPicks}
+                  watched={watchedTitles}
+                  history={groupHistory}
+                  onOpenTitle={(title) => setShowdownDetailsTitle(title)}
+                  onToggleSave={(title) => handleToggleSave(title, "solo")}
+                  onRateWatched={handleWatchedRating}
+                />
+              )}
+            </div>
+          </section>
+        ) : null}
+
+        {session.phase === "questions" && !showGroupFlow && !showTastePanel && !showLibraryPanel ? (
           <QuestionsSection
             answers={session.answers}
             isBuildingDeck={isBuildingDeck || groupFlow.isBusy}
@@ -279,6 +447,10 @@ export function App() {
             viewerPrefs={viewerPrefs}
             onWatchRegionChange={handleWatchRegionChange}
             onClearCache={handleResetPersonalization}
+            onToggleTasteProfile={openTastePage}
+            onToggleLibrary={openLibraryPage}
+            savedCount={savedPicks.length}
+            watchedCount={watchedTitles.length}
             onStartSolo={startSwipeRound}
             onStartGroup={handleStartGroup}
           />
@@ -391,7 +563,15 @@ export function App() {
           <ResultSection
             winner={winner}
             backup={backup}
+            whyThisPick={winnerReasons}
+            isSaved={savedIds.has(winner.id)}
+            isWatched={watchedById.has(winner.id)}
+            watchedRating={watchedById.get(winner.id)?.rating}
+            onToggleSave={() => handleToggleSave(winner, "solo")}
+            onMarkWatched={() => handleMarkWatched(winner, "solo")}
+            onRateWatched={(rating) => handleWatchedRating(winner.id, rating)}
             onWatchNow={handleWatchNow}
+            onWatchTrailer={() => handleWatchTrailer(winner)}
             onPickAnother={resetAndStartNewRound}
           />
         ) : null}
@@ -410,8 +590,14 @@ export function App() {
             partnerRequestedCompromise={groupFlow.partnerRequestedCompromise}
             sharedCompromise={groupFlow.sharedCompromise}
             compromiseMatched={groupFlow.compromiseMatched}
+            whySharedPick={sharedCompromiseReasons}
+            isTitleSaved={(titleId) => savedIds.has(titleId)}
+            isTitleWatched={(titleId) => watchedById.has(titleId)}
+            onToggleSaveTitle={(title) => handleToggleSave(title, "group")}
+            onMarkWatchedTitle={(title) => handleMarkWatched(title, "group")}
             onStartCompromiseShowdown={groupFlow.startCompromiseShowdown}
             onWatchNow={(title) => openWatchUrl(title, viewerPrefs.watchRegion)}
+            onWatchTrailer={(title) => handleWatchTrailer(title)}
             onShowMore={(title) => setShowdownDetailsTitle(title)}
             onStartAnotherRound={groupFlow.reset}
           />

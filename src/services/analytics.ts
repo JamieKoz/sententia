@@ -11,7 +11,7 @@ export function trackEvent(event: string, props: AnalyticsProps = {}): void {
   if (typeof window === "undefined") return;
 
   const detail = { event, ...props };
-  window.dispatchEvent(new CustomEvent("couchpicks:analytics", { detail }));
+  window.dispatchEvent(new CustomEvent("sententia:analytics", { detail }));
 
   if (typeof window.plausible === "function") {
     const plausibleProps: Record<string, string | number | boolean> = {};

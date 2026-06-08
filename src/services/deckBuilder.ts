@@ -9,6 +9,7 @@ import { createSyntheticAiTitle, enrichTitlesWithTmdb, resolveAiSuggestionsToTit
 import { buildDeck, fillDeckFromSources } from "../state/machine";
 import type { OnboardingAnswers, TasteProfile, Title } from "../types";
 import { mergeCatalog } from "../utils/appState";
+import { loadWatchedTitleIds } from "./storage";
 
 interface BuildRecommendationDeckParams {
   answers: OnboardingAnswers;
@@ -44,6 +45,7 @@ export async function buildRecommendationDeck(
 ): Promise<BuildRecommendationDeckResult> {
   const { answers, profile, catalog, watchRegion } = params;
   const { ai: aiEnabled, tmdb: tmdbEnabled } = await loadBackendConfig();
+  const blockedIds = new Set([...profile.rejectedIds, ...profile.seenIds, ...loadWatchedTitleIds()]);
   let deckTitles: Title[] = [];
 
   if (aiEnabled) {
@@ -84,9 +86,12 @@ export async function buildRecommendationDeck(
 
   if (deckTitles.length > 0) {
     deckTitles = deckTitles.filter((title) => passesCandidateConstraints(title, answers));
+    deckTitles = deckTitles.filter((title) => !blockedIds.has(title.id));
   }
 
-  const catalogForDeck = deckTitles.length > 0 ? mergeCatalog(catalog, deckTitles) : catalog;
+  const catalogForDeck = (deckTitles.length > 0 ? mergeCatalog(catalog, deckTitles) : catalog).filter(
+    (title) => !blockedIds.has(title.id)
+  );
   const primaryIds = deckTitles.map((title) => title.id);
   const fallbackIds = buildDeck(catalogForDeck, answers, profile);
   const deck = primaryIds.length > 0 ? fillDeckFromSources(primaryIds, fallbackIds) : fallbackIds;

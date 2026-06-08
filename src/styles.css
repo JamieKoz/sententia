@@ -259,6 +259,25 @@ body {
   flex-direction: column;
 }
 
+.utility-page-shell {
+  animation: onboarding-reveal 220ms ease-out;
+}
+
+.utility-page-panel {
+  animation: utility-panel-slide 220ms ease-out;
+}
+
+@keyframes utility-panel-slide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .onboarding-content {
   display: flex;
   width: 100%;

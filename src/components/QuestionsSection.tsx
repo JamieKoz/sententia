@@ -125,6 +125,10 @@ export function QuestionsSection(props: {
   viewerPrefs: ViewerPrefs;
   onWatchRegionChange: (watchRegion: string) => void;
   onClearCache: () => void;
+  onToggleTasteProfile: () => void;
+  onToggleLibrary: () => void;
+  savedCount: number;
+  watchedCount: number;
   onStartSolo: () => void;
   onStartGroup: () => void;
 }) {
@@ -144,6 +148,10 @@ export function QuestionsSection(props: {
     viewerPrefs,
     onWatchRegionChange,
     onClearCache,
+    onToggleTasteProfile,
+    onToggleLibrary,
+    savedCount,
+    watchedCount,
     onStartSolo,
     onStartGroup
   } = props;
@@ -241,13 +249,17 @@ export function QuestionsSection(props: {
             viewerPrefs={viewerPrefs}
             onWatchRegionChange={onWatchRegionChange}
             onClearCache={onClearCache}
+            onToggleTasteProfile={onToggleTasteProfile}
+            onToggleLibrary={onToggleLibrary}
+            savedCount={savedCount}
+            watchedCount={watchedCount}
           />
         </div>
 
         <div className="onboarding-content">
           {step === "welcome" ? (
             <div key="welcome" className="onboarding-step onboarding-step--forward onboarding-welcome">
-              <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl">CouchPick</h1>
+              <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl">Sententia</h1>
               <p className="mt-4 max-w-md text-base text-zinc-300 sm:text-lg">Stop scrolling. Swipe. Pick. Watch.</p>
               <div className="mt-8">
                 <NavButton variant="primary" onClick={goNext}>

@@ -16,7 +16,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error("couchpicks render error", error, errorInfo);
+    console.error("sententia render error", error, errorInfo);
   }
 
   private handleReload = () => {

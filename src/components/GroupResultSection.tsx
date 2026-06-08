@@ -15,8 +15,14 @@ export function GroupResultSection(props: {
   partnerRequestedCompromise: boolean;
   sharedCompromise?: Title;
   compromiseMatched: boolean;
+  whySharedPick?: string[];
+  isTitleSaved: (titleId: string) => boolean;
+  isTitleWatched: (titleId: string) => boolean;
+  onToggleSaveTitle: (title: Title) => void;
+  onMarkWatchedTitle: (title: Title) => void;
   onStartCompromiseShowdown: () => void;
   onWatchNow: (title: Title) => void;
+  onWatchTrailer: (title: Title) => void;
   onShowMore: (title: Title) => void;
   onStartAnotherRound: () => void;
 }) {
@@ -28,8 +34,14 @@ export function GroupResultSection(props: {
     partnerRequestedCompromise,
     sharedCompromise,
     compromiseMatched,
+    whySharedPick,
+    isTitleSaved,
+    isTitleWatched,
+    onToggleSaveTitle,
+    onMarkWatchedTitle,
     onStartCompromiseShowdown,
     onWatchNow,
+    onWatchTrailer,
     onShowMore,
     onStartAnotherRound
   } = props;
@@ -85,6 +97,13 @@ export function GroupResultSection(props: {
           <p className="mt-3 text-center text-sm font-medium text-zinc-100">
             {sharedCompromise.name} ({sharedCompromise.releaseYear})
           </p>
+          {whySharedPick?.length ? (
+            <ul className="mt-2 list-disc pl-5 text-xs text-violet-100">
+              {whySharedPick.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          ) : null}
           <div className="mt-3 grid gap-2">
             <button
               className="rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-3 py-1.5 text-xs font-medium text-white shadow-lg shadow-violet-900/35 transition hover:brightness-110"
@@ -94,9 +113,27 @@ export function GroupResultSection(props: {
             </button>
             <button
               className="rounded-full border border-white/25 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-100 transition hover:bg-zinc-800/75"
+              onClick={() => onWatchTrailer(sharedCompromise)}
+            >
+              Watch trailer
+            </button>
+            <button
+              className="rounded-full border border-white/25 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-100 transition hover:bg-zinc-800/75"
               onClick={() => onShowMore(sharedCompromise)}
             >
               Show more
+            </button>
+            <button
+              className="rounded-full border border-white/25 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-100 transition hover:bg-zinc-800/75"
+              onClick={() => onToggleSaveTitle(sharedCompromise)}
+            >
+              {isTitleSaved(sharedCompromise.id) ? "Saved in watchlist" : "Save for later"}
+            </button>
+            <button
+              className="rounded-full border border-white/25 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-100 transition hover:bg-zinc-800/75"
+              onClick={() => onMarkWatchedTitle(sharedCompromise)}
+            >
+              {isTitleWatched(sharedCompromise.id) ? "Watched" : "Mark watched"}
             </button>
           </div>
           {(myCompromisePick || partnerCompromisePick) && !compromiseMatched ? (
@@ -172,6 +209,12 @@ export function GroupResultSection(props: {
                       >
                         Show more
                       </button>
+                      <button
+                        className="mt-2 rounded-full border border-white/25 bg-zinc-900/60 px-2.5 py-1 text-xs text-zinc-100 transition hover:bg-zinc-800/75"
+                        onClick={() => onWatchTrailer(entry.title!)}
+                      >
+                        Watch trailer
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -214,9 +257,21 @@ export function GroupResultSection(props: {
                     </button>
                     <button
                       className="rounded-full border border-white/25 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-100 transition hover:bg-zinc-800/75"
+                      onClick={() => onWatchTrailer(entry.title!)}
+                    >
+                      Watch trailer
+                    </button>
+                    <button
+                      className="rounded-full border border-white/25 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-100 transition hover:bg-zinc-800/75"
                       onClick={() => onShowMore(entry.title!)}
                     >
                       Show more
+                    </button>
+                    <button
+                      className="rounded-full border border-white/25 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-100 transition hover:bg-zinc-800/75"
+                      onClick={() => onToggleSaveTitle(entry.title!)}
+                    >
+                      {isTitleSaved(entry.title!.id) ? "Saved in watchlist" : "Save for later"}
                     </button>
                   </div>
                 </>

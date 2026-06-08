@@ -68,3 +68,16 @@ export function openWatchUrl(title: WatchLinkTitle, watchRegion: string): void {
   trackWatchClick(title, destination, region);
   window.open(url, "_blank", "noopener,noreferrer");
 }
+
+export function buildTrailerUrl(title: Pick<WatchLinkTitle, "name" | "releaseYear">): string {
+  const query = encodeURIComponent(`${title.name} ${title.releaseYear} official trailer`);
+  return `https://www.youtube.com/results?search_query=${query}`;
+}
+
+export function openTrailerUrl(title: Pick<WatchLinkTitle, "name" | "releaseYear">): void {
+  trackEvent("watch_trailer_click", {
+    title: title.name,
+    year: title.releaseYear
+  });
+  window.open(buildTrailerUrl(title), "_blank", "noopener,noreferrer");
+}

@@ -5,11 +5,19 @@ import type { ViewerPrefs } from "../types";
 export function SettingsMenu({
   viewerPrefs,
   onWatchRegionChange,
-  onClearCache
+  onClearCache,
+  onToggleTasteProfile,
+  onToggleLibrary,
+  savedCount,
+  watchedCount
 }: {
   viewerPrefs: ViewerPrefs;
   onWatchRegionChange: (watchRegion: string) => void;
   onClearCache: () => void;
+  onToggleTasteProfile?: () => void;
+  onToggleLibrary?: () => void;
+  savedCount?: number;
+  watchedCount?: number;
 }) {
   return (
     <details className="group relative ml-auto">
@@ -50,6 +58,31 @@ export function SettingsMenu({
           ))}
         </select>
         <p className="mt-1.5 text-[11px] text-zinc-500">{formatViewerRegionHint(viewerPrefs)}</p>
+        {onToggleTasteProfile || onToggleLibrary ? (
+          <div className="mt-3 border-t border-white/10 pt-3">
+            <p className="text-[11px] uppercase tracking-wide text-zinc-400">Personalization</p>
+            <div className="mt-2 grid gap-2">
+              {onToggleTasteProfile ? (
+                <button
+                  type="button"
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-100 transition hover:bg-zinc-800/80"
+                  onClick={onToggleTasteProfile}
+                >
+                  Taste profile
+                </button>
+              ) : null}
+              {onToggleLibrary ? (
+                <button
+                  type="button"
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-100 transition hover:bg-zinc-800/80"
+                  onClick={onToggleLibrary}
+                >
+                  Library ({savedCount ?? 0}/{watchedCount ?? 0})
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
         <button
           type="button"
           className="mt-3 w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-100 transition hover:bg-zinc-800/80"

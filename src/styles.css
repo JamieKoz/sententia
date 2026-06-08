@@ -350,7 +350,7 @@ body {
     box-shadow 0.2s ease;
 }
 
-.onboarding-choice-card:hover:not(.onboarding-choice-card--selected) {
+.onboarding-choice-card:hover:not(.onboarding-choice-card--selected):not(.onboarding-choice-card--exclusion-selected) {
   border-color: rgba(167, 139, 250, 0.55);
   background: linear-gradient(145deg, rgba(91, 33, 182, 0.24), rgba(24, 24, 27, 0.92));
   box-shadow: 0 8px 24px rgba(91, 33, 182, 0.18);
@@ -524,7 +524,7 @@ body {
 .onboarding-filter-block {
   width: 100%;
   border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(9, 9, 13, 0.28);
   padding: 1rem;
 }
@@ -589,6 +589,14 @@ body {
   border-color: rgba(251, 113, 133, 0.75);
   background: linear-gradient(145deg, rgba(190, 24, 93, 0.38), rgba(24, 24, 27, 0.88));
   box-shadow: 0 12px 36px rgba(190, 24, 93, 0.24);
+}
+
+.onboarding-choice-card--exclusion-selected:hover,
+.onboarding-choice-card--exclusion-selected:focus-visible {
+  border-color: rgba(251, 113, 133, 0.88);
+  background: linear-gradient(145deg, rgba(159, 18, 57, 0.52), rgba(24, 24, 27, 0.92));
+  box-shadow: 0 14px 40px rgba(159, 18, 57, 0.34);
+  transform: translateY(-2px);
 }
 
 .onboarding-summary {
@@ -1192,6 +1200,7 @@ body {
 
 .showdown-choice__poster {
   position: relative;
+  overflow: hidden;
   transform-origin: center bottom;
   transition:
     border-color 0.22s ease,
@@ -1218,7 +1227,7 @@ body {
 .showdown-choice:focus-within .showdown-choice__poster {
   border-color: rgba(196, 181, 253, 0.78);
   box-shadow: 0 18px 42px rgba(76, 29, 149, 0.38);
-  transform: translateY(-4px) scale(1.025);
+  transform: translateY(-3px) scale(1.01);
 }
 
 .showdown-choice:hover .showdown-choice__poster::before,
@@ -1228,12 +1237,14 @@ body {
 }
 
 .showdown-choice__image {
+  display: block;
+  border-radius: inherit;
   transition: transform 0.32s ease, filter 0.22s ease;
 }
 
 .showdown-choice:hover .showdown-choice__image,
 .showdown-choice:focus-within .showdown-choice__image {
-  transform: scale(1.045);
+  transform: scale(1.018);
   filter: saturate(1.08) brightness(1.04);
 }
 

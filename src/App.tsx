@@ -44,6 +44,7 @@ export function App() {
     return loadViewerPrefs();
   });
   const [showdownDetailsTitle, setShowdownDetailsTitle] = useState<Title | null>(null);
+  const [roomShareFeedback, setRoomShareFeedback] = useState<string | null>(null);
 
   const {
     customYearStartPct,
@@ -196,6 +197,56 @@ export function App() {
     void groupFlow.shareCompromisePick();
   }, [groupFlow.state.phase, groupFlow.compromisePick?.id]);
 
+  useEffect(() => {
+    if (!roomShareFeedback) return;
+    const timer = window.setTimeout(() => setRoomShareFeedback(null), 1800);
+    return () => window.clearTimeout(timer);
+  }, [roomShareFeedback]);
+
+  async function handleCopyRoomInvite() {
+    const shareUrl = groupFlow.state.shareUrl;
+    if (!shareUrl) return;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = shareUrl;
+        textarea.setAttribute("readonly", "true");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setRoomShareFeedback("Link copied!");
+    } catch {
+      setRoomShareFeedback("Unable to copy link");
+    }
+  }
+
+  async function handleShareRoomInvite() {
+    const shareUrl = groupFlow.state.shareUrl;
+    if (!shareUrl) return;
+    const inviteText = "Someone wants you to help decide what film to watch tonight. Join the room!";
+    try {
+      if (typeof navigator !== "undefined" && "share" in navigator) {
+        await navigator.share({
+          title: "Join my CouchPick room",
+          text: inviteText,
+          url: shareUrl
+        });
+        setRoomShareFeedback("Invite shared!");
+        return;
+      }
+
+      await handleCopyRoomInvite();
+    } catch {
+      setRoomShareFeedback("Unable to share invite");
+    }
+  }
+
   return (
     <div className="relative min-h-screen">
       <ThumbnailBackdrop />
@@ -257,14 +308,28 @@ export function App() {
             <div className="mt-4 flex gap-3">
               <button
                 className="rounded-full border border-white/30 bg-zinc-900/60 px-4 py-2 text-sm transition hover:border-white/50 hover:bg-zinc-800/75"
-                onClick={async () => {
-                  if (!groupFlow.state.shareUrl) return;
-                  await navigator.clipboard.writeText(groupFlow.state.shareUrl);
+                onClick={() => {
+                  void handleCopyRoomInvite();
                 }}
               >
                 Copy invite link
               </button>
+              <button
+                className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-zinc-900/60 px-4 py-2 text-sm transition hover:border-white/50 hover:bg-zinc-800/75"
+                onClick={() => {
+                  void handleShareRoomInvite();
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M14 3l7 7-7 7v-4.1c-5.2 0-8.8 1.7-11 5.1.6-6 3.9-10 11-10.9V3z"
+                  />
+                </svg>
+                Share invite
+              </button>
             </div>
+            {roomShareFeedback ? <p className="mt-2 text-xs text-zinc-300">{roomShareFeedback}</p> : null}
           </section>
         ) : null}
 

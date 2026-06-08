@@ -335,6 +335,22 @@ export function QuestionsSection(props: {
                   </summary>
 
                   <div className="onboarding-filter-panel__content">
+
+                    <div className="onboarding-filter-block">
+                      <SectionHeading title="Release date" subtitle="Leave on Any era for the broadest deck." />
+                      <ReleaseTimeline
+                        releaseWindow={answers.releaseWindow ?? "any"}
+                        customYearRange={customYearRange}
+                        customYearStartPct={customYearStartPct}
+                        customYearEndPct={customYearEndPct}
+                        onSelectWindow={(window) =>
+                          onUpdateAnswers({ releaseWindow: window, customYearRange: null, quickModeId: undefined })
+                        }
+                        onToggleCustomYearRange={onToggleCustomYearRange}
+                        onUpdateCustomYearRange={onUpdateCustomYearRange}
+                      />
+                    </div>
+
                     <div className="onboarding-filter-block">
                       <SectionHeading title="Provider" subtitle="No preference is fine." />
                       <div className="onboarding-provider-layout">
@@ -374,36 +390,11 @@ export function QuestionsSection(props: {
                     </div>
 
                     <div className="onboarding-filter-block">
-                      <SectionHeading title="Release date" subtitle="Leave on Any era for the broadest deck." />
-                      <ReleaseTimeline
-                        releaseWindow={answers.releaseWindow ?? "any"}
-                        customYearRange={customYearRange}
-                        customYearStartPct={customYearStartPct}
-                        customYearEndPct={customYearEndPct}
-                        onSelectWindow={(window) =>
-                          onUpdateAnswers({ releaseWindow: window, customYearRange: null, quickModeId: undefined })
-                        }
-                        onToggleCustomYearRange={onToggleCustomYearRange}
-                        onUpdateCustomYearRange={onUpdateCustomYearRange}
+                      <SectionHeading title="Discovery style" />
+                      <DiscoveryPopularityPicker
+                        familiarities={answers.familiarities}
+                        onChange={(familiarities) => onUpdateAnswers({ familiarities, quickModeId: undefined })}
                       />
-                    </div>
-
-                    <div className="onboarding-filter-grid">
-                      <div className="onboarding-filter-block">
-                        <SectionHeading title="Language" subtitle="English is selected by default." />
-                        <LanguageMultiSelect
-                          selected={answers.languages ?? ["en"]}
-                          onChange={(languages) => onUpdateAnswers({ languages })}
-                        />
-                      </div>
-
-                      <div className="onboarding-filter-block">
-                        <SectionHeading title="Discovery style" />
-                        <DiscoveryPopularityPicker
-                          familiarities={answers.familiarities}
-                          onChange={(familiarities) => onUpdateAnswers({ familiarities, quickModeId: undefined })}
-                        />
-                      </div>
                     </div>
 
                     <div className="onboarding-filter-block">
@@ -417,6 +408,14 @@ export function QuestionsSection(props: {
                     <div className="onboarding-filter-block">
                       <SectionHeading title="Avoid tonight" subtitle="Tap genres you do not want in the deck." />
                       <AvoidTonightPicker selected={answers.hardExclusions ?? []} onToggle={onToggleExclusion} />
+                    </div>
+
+                    <div className="onboarding-filter-block">
+                      <SectionHeading title="Language" subtitle="English is selected by default." />
+                      <LanguageMultiSelect
+                        selected={answers.languages ?? ["en"]}
+                        onChange={(languages) => onUpdateAnswers({ languages })}
+                      />
                     </div>
 
                     <div className="onboarding-filter-block">

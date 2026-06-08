@@ -108,15 +108,12 @@ export function GroupResultSection(props: {
         </div>
       ) : hasOverlap ? (
         <div className="mt-4 rounded-2xl border border-violet-300/35 bg-violet-950/25 p-4">
-          <p className="text-sm font-medium text-violet-100">You both liked</p>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          <p className="text-sm font-medium text-violet-100">{overlapCopy}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
             {overlapTitles.slice(0, 6).map((title) => (
-              <PosterThumb key={title.id} title={title} />
+              <PosterThumb key={title.id} title={title} size="large" />
             ))}
           </div>
-          <p className="mt-3 text-sm text-zinc-200">
-            {overlapCopy} {overlapTitles.map((title) => title.name).join(", ")}
-          </p>
           {canRunCompromise ? (
             <button
               className="mt-3 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-3 py-1.5 text-xs font-medium text-white shadow-lg shadow-violet-900/35 transition hover:brightness-110"
@@ -151,8 +148,8 @@ export function GroupResultSection(props: {
               <article key={entry.label} className="rounded-xl border border-white/15 bg-zinc-900/45 p-3">
                 <p className="text-xs uppercase tracking-wide text-zinc-400">{entry.label}</p>
                 {entry.title ? (
-                  <div className="mt-2 flex items-center gap-3">
-                    <div className="h-14 w-10 overflow-hidden rounded-md border border-white/20 bg-zinc-900/60">
+                  <div className="mt-3 flex items-center flex-col justify-center gap-3">
+                    <div className="h-32 w-24 overflow-hidden rounded-lg border border-white/20 bg-zinc-900/60">
                       {tmdbPosterUrl(entry.title.posterPath) ? (
                         <img
                           src={tmdbPosterUrl(entry.title.posterPath)!}
@@ -165,12 +162,12 @@ export function GroupResultSection(props: {
                         </span>
                       )}
                     </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm text-zinc-100">
+                    <div className="min-w-0 flex flex-col justify-center">
+                      <p className="truncate text-base font-medium text-zinc-100">
                         {entry.title.name} ({entry.title.releaseYear})
                       </p>
                       <button
-                        className="mt-1 rounded-full border border-white/25 bg-zinc-900/60 px-2 py-1 text-[11px] text-zinc-100 transition hover:bg-zinc-800/75"
+                        className="mt-2 rounded-full border border-white/25 bg-zinc-900/60 px-2.5 py-1 text-xs text-zinc-100 transition hover:bg-zinc-800/75"
                         onClick={() => onShowMore(entry.title!)}
                       >
                         Show more
@@ -254,7 +251,7 @@ export function GroupResultSection(props: {
                   onStartCompromiseShowdown();
                 }}
               >
-                Join decide together
+                Join now
               </button>
               <button
                 className="rounded-full border border-white/25 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-100 transition hover:bg-zinc-800/75"
@@ -273,11 +270,15 @@ export function GroupResultSection(props: {
   );
 }
 
-function PosterThumb({ title }: { title: Title }) {
+function PosterThumb({ title, size = "small" }: { title: Title; size?: "small" | "large" }) {
   const poster = tmdbPosterUrl(title.posterPath);
   return (
     <div
-      className="h-14 w-10 overflow-hidden rounded-md border border-white/20 bg-zinc-900/60"
+      className={
+        size === "large"
+          ? "h-24 w-16 overflow-hidden rounded-lg border border-white/20 bg-zinc-900/60"
+          : "h-14 w-10 overflow-hidden rounded-md border border-white/20 bg-zinc-900/60"
+      }
       title={title.name}
     >
       {poster ? (

@@ -1,6 +1,6 @@
 "$schema" = "./node_modules/wrangler/config-schema.json"
 
-name = "sententia"
+name = "cinematch"
 compatibility_date = "2026-04-12"
 
 main = "./worker/index.ts"

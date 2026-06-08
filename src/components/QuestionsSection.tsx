@@ -19,6 +19,8 @@ type OnboardingStep = "welcome" | "vibe" | "basics" | "review";
 type TransitionDirection = "forward" | "back";
 
 const STEP_ORDER: OnboardingStep[] = ["welcome", "vibe", "basics", "review"];
+const QUESTION_STEPS = STEP_ORDER.filter((step): step is Exclude<OnboardingStep, "welcome"> => step !== "welcome");
+const NO_PREFERENCE_PRESET_ID = "no-preference";
 
 function stepIndex(step: OnboardingStep) {
   return STEP_ORDER.indexOf(step);
@@ -42,15 +44,29 @@ function StepFrame({
   footer,
   children
 }: {
-  step: OnboardingStep;
+  step: Exclude<OnboardingStep, "welcome">;
   direction: TransitionDirection;
   title: string;
   subtitle?: string;
   footer?: ReactNode;
   children: ReactNode;
 }) {
+  const progressIndex = QUESTION_STEPS.indexOf(step);
+  const progressValue = progressIndex >= 0 ? progressIndex + 1 : 1;
+  const progressTotal = QUESTION_STEPS.length;
+  const progressPct = Math.round((progressValue / progressTotal) * 100);
+
   return (
     <section key={step} className={`onboarding-step onboarding-step--${direction} onboarding-step--stacked`}>
+      <div className="onboarding-progress" aria-label={`Step ${progressValue} of ${progressTotal}`}>
+        <div className="onboarding-progress__meta">
+          <span>{`Step ${progressValue}`}</span>
+          <span>{`${progressTotal} total`}</span>
+        </div>
+        <div className="onboarding-progress__track" role="progressbar" aria-valuemin={1} aria-valuemax={progressTotal} aria-valuenow={progressValue}>
+          <span className="onboarding-progress__fill" style={{ width: `${progressPct}%` }} />
+        </div>
+      </div>
       <div className="mb-6 text-center sm:mb-8">
         <h2 className="text-xl font-semibold tracking-tight text-white sm:text-2xl md:text-3xl">{title}</h2>
         {subtitle ? <p className="mt-2 text-sm text-zinc-300 sm:text-base">{subtitle}</p> : null}
@@ -147,6 +163,9 @@ export function QuestionsSection(props: {
     if (step === "welcome") {
       onBegin();
     }
+    if (step === "vibe" && !answers.quickModeId) {
+      applyNoPreference();
+    }
     if (step === "basics") {
       commitKeywords(keywordsDraft);
     }
@@ -181,6 +200,18 @@ export function QuestionsSection(props: {
     });
   }
 
+  function applyNoPreference() {
+    onUpdateAnswers({
+      moods: [],
+      preferredType: "either",
+      runtime: "any",
+      releaseWindow: "any",
+      customYearRange: null,
+      familiarities: [],
+      quickModeId: NO_PREFERENCE_PRESET_ID
+    });
+  }
+
   async function handleStart() {
     commitKeywords(keywordsDraft);
     if (watchMode === "solo") {
@@ -190,12 +221,13 @@ export function QuestionsSection(props: {
     onStartGroup();
   }
 
-  const canAdvanceFromVibe = (answers.moods?.length ?? 0) > 0;
+  const activeQuickModeId = answers.quickModeId ?? NO_PREFERENCE_PRESET_ID;
+  const selectedQuickPreset = QUICK_PRESETS.find((preset) => preset.id === activeQuickModeId);
 
   const vibeNav = (
     <div className="onboarding-nav flex items-center justify-center gap-3">
       <NavButton onClick={goBack}>Back</NavButton>
-      <NavButton variant="primary" onClick={goNext} disabled={!canAdvanceFromVibe}>
+      <NavButton variant="primary" onClick={goNext}>
         Continue
       </NavButton>
     </div>
@@ -230,29 +262,44 @@ export function QuestionsSection(props: {
               step="vibe"
               direction={direction}
               title="What kind of night is it?"
-              subtitle="Choose the setup that best matches tonight."
+              subtitle="Pick a vibe preset, or keep it open and tune basics next."
               footer={vibeNav}
             >
               <div className="onboarding-quick-presets">
-                {QUICK_PRESETS.map((preset) => {
-                  const selected = answers.quickModeId === preset.id;
-                  return (
-                    <button
-                      key={preset.id}
-                      type="button"
-                      className={
-                        selected
-                          ? "onboarding-choice-card onboarding-choice-card--compact onboarding-choice-card--selected"
-                          : "onboarding-choice-card onboarding-choice-card--compact"
-                      }
-                      onClick={() => applyQuickPreset(preset)}
-                      aria-pressed={selected}
-                    >
-                      <span className="text-base font-semibold text-white sm:text-lg">{preset.label}</span>
-                      <span className="mt-2 text-xs text-zinc-300 sm:text-sm">{preset.description}</span>
-                    </button>
-                  );
-                })}
+                <button
+                  type="button"
+                  className={
+                    activeQuickModeId === NO_PREFERENCE_PRESET_ID
+                      ? "onboarding-choice-card onboarding-choice-card--compact onboarding-choice-card--wide-row onboarding-choice-card--selected"
+                      : "onboarding-choice-card onboarding-choice-card--compact onboarding-choice-card--wide-row"
+                  }
+                  onClick={applyNoPreference}
+                  aria-pressed={activeQuickModeId === NO_PREFERENCE_PRESET_ID}
+                >
+                  <span className="text-base font-semibold text-white sm:text-lg">No strong preference</span>
+                  <span className="mt-2 text-xs text-zinc-300 sm:text-sm">Keep options broad and decide from defaults.</span>
+                </button>
+                <div className="onboarding-quick-presets__grid">
+                  {QUICK_PRESETS.map((preset) => {
+                    const selected = activeQuickModeId === preset.id;
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        className={
+                          selected
+                            ? "onboarding-choice-card onboarding-choice-card--compact onboarding-choice-card--selected"
+                            : "onboarding-choice-card onboarding-choice-card--compact"
+                        }
+                        onClick={() => applyQuickPreset(preset)}
+                        aria-pressed={selected}
+                      >
+                        <span className="text-base font-semibold text-white sm:text-lg">{preset.label}</span>
+                        <span className="mt-2 text-xs text-zinc-300 sm:text-sm">{preset.description}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </StepFrame>
           ) : null}
@@ -262,9 +309,37 @@ export function QuestionsSection(props: {
               step="basics"
               direction={direction}
               title="Ready when you are"
-              subtitle="Confirm the basics. Add more filters only if you want them."
+              subtitle="Your vibe pre-fills these settings. Keep them or tweak anything."
             >
               <div className="onboarding-basics">
+                <SectionHeading title="Watching setup" subtitle="Choose solo or group before building the deck." />
+                <div className="onboarding-segment-grid onboarding-segment-grid--two">
+                  <button
+                    type="button"
+                    className={watchMode === "solo" ? "onboarding-segment onboarding-segment--selected" : "onboarding-segment"}
+                    onClick={() => setWatchMode("solo")}
+                    aria-pressed={watchMode === "solo"}
+                  >
+                    <span>Solo</span>
+                    <small>Your personal deck</small>
+                  </button>
+                  <button
+                    type="button"
+                    className={watchMode === "group" ? "onboarding-segment onboarding-segment--selected" : "onboarding-segment"}
+                    onClick={() => setWatchMode("group")}
+                    aria-pressed={watchMode === "group"}
+                  >
+                    <span>Group</span>
+                    <small>Create a shareable room</small>
+                  </button>
+                </div>
+
+                {selectedQuickPreset ? (
+                  <p className="mt-4 rounded-xl border border-violet-300/25 bg-violet-500/10 px-4 py-2 text-left text-sm text-violet-100">
+                    Using <strong>{selectedQuickPreset.label}</strong>. Adjust format, length, or filters to customize it.
+                  </p>
+                ) : null}
+
                 <SectionHeading title="Format" />
                 <div className="onboarding-segment-grid onboarding-segment-grid--three">
                   {TYPE_OPTIONS.map((typeOption) => {
@@ -303,33 +378,51 @@ export function QuestionsSection(props: {
                   })}
                 </div>
 
-                <SectionHeading title="Watching" />
-                <div className="onboarding-segment-grid onboarding-segment-grid--two">
-                  <button
-                    type="button"
-                    className={watchMode === "solo" ? "onboarding-segment onboarding-segment--selected" : "onboarding-segment"}
-                    onClick={() => setWatchMode("solo")}
-                    aria-pressed={watchMode === "solo"}
-                  >
-                    <span>Solo</span>
-                    <small>Your personal deck</small>
-                  </button>
-                  <button
-                    type="button"
-                    className={watchMode === "group" ? "onboarding-segment onboarding-segment--selected" : "onboarding-segment"}
-                    onClick={() => setWatchMode("group")}
-                    aria-pressed={watchMode === "group"}
-                  >
-                    <span>Group</span>
-                    <small>Create a shareable room</small>
-                  </button>
+                <div className="onboarding-filter-block mt-4">
+                  <SectionHeading title="Provider" subtitle="Shown upfront because this usually matters most." />
+                  <div className="onboarding-provider-layout">
+                    <button
+                      type="button"
+                      aria-label="No preference"
+                      aria-pressed={!answers.providers?.length}
+                      className={
+                        !answers.providers?.length
+                          ? "onboarding-provider-card onboarding-provider-card--any onboarding-provider-card--selected"
+                          : "onboarding-provider-card onboarding-provider-card--any"
+                      }
+                      onClick={() => onUpdateAnswers({ providers: [] })}
+                    >
+                      <span className="onboarding-provider-card__any-label">No preference</span>
+                    </button>
+                    <div className="onboarding-provider-grid">
+                      {PROVIDER_OPTIONS.map((provider) => {
+                        const selected = answers.providers?.includes(provider.id);
+                        return (
+                          <button
+                            key={provider.id}
+                            type="button"
+                            aria-label={provider.label}
+                            aria-pressed={selected}
+                            className={
+                              selected
+                                ? "onboarding-provider-card onboarding-provider-card--wide onboarding-provider-card--selected"
+                                : "onboarding-provider-card onboarding-provider-card--wide"
+                            }
+                            onClick={() => onToggleProvider(provider.id)}
+                          >
+                            <img src={provider.logoSrc} alt="" className="onboarding-provider-card__logo" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
                 <details className="onboarding-filter-panel">
                   <summary className="summary-no-marker onboarding-filter-panel__summary">
                     <span>
                       <strong>Additional filters</strong>
-                      <small>Provider, language, release date, audience, avoids, and keywords</small>
+                      <small>Language, release date, discovery style, avoids, and keywords</small>
                     </span>
                     <span aria-hidden="true">+</span>
                   </summary>
@@ -349,44 +442,6 @@ export function QuestionsSection(props: {
                         onToggleCustomYearRange={onToggleCustomYearRange}
                         onUpdateCustomYearRange={onUpdateCustomYearRange}
                       />
-                    </div>
-
-                    <div className="onboarding-filter-block">
-                      <SectionHeading title="Provider" subtitle="No preference is fine." />
-                      <div className="onboarding-provider-layout">
-                        <button
-                          type="button"
-                          aria-label="No preference"
-                          className={
-                            !answers.providers?.length
-                              ? "onboarding-provider-card onboarding-provider-card--any onboarding-provider-card--selected"
-                              : "onboarding-provider-card onboarding-provider-card--any"
-                          }
-                          onClick={() => onUpdateAnswers({ providers: [] })}
-                        >
-                          <span className="onboarding-provider-card__any-label">No preference</span>
-                        </button>
-                        <div className="onboarding-provider-grid">
-                          {PROVIDER_OPTIONS.map((provider) => {
-                            const selected = answers.providers?.includes(provider.id);
-                            return (
-                              <button
-                                key={provider.id}
-                                type="button"
-                                aria-label={provider.label}
-                                className={
-                                  selected
-                                    ? "onboarding-provider-card onboarding-provider-card--wide onboarding-provider-card--selected"
-                                    : "onboarding-provider-card onboarding-provider-card--wide"
-                                }
-                                onClick={() => onToggleProvider(provider.id)}
-                              >
-                                <img src={provider.logoSrc} alt="" className="onboarding-provider-card__logo" />
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
                     </div>
 
                     <div className="onboarding-filter-block">
@@ -434,6 +489,19 @@ export function QuestionsSection(props: {
                         }}
                         placeholder="Black and white, Slasher, Feel-good"
                       />
+                      {keywordsDraft
+                        .split(",")
+                        .map((item) => item.trim())
+                        .filter(Boolean)
+                        .slice(0, 8)
+                        .map((keyword, idx) => (
+                          <span
+                            key={`${keyword}-${idx}`}
+                            className="mr-2 mt-2 inline-flex rounded-full border border-violet-300/35 bg-violet-500/20 px-2.5 py-1 text-xs text-violet-100"
+                          >
+                            {keyword.toLowerCase()}
+                          </span>
+                        ))}
                     </div>
                   </div>
                 </details>
@@ -455,6 +523,22 @@ export function QuestionsSection(props: {
               title="Your picks"
               subtitle="Everything looks good? We'll build your deck from this."
             >
+              <div className="mb-4 flex flex-wrap items-center justify-center gap-2 text-xs text-zinc-300">
+                <button
+                  type="button"
+                  className="rounded-full border border-white/20 bg-zinc-900/45 px-3 py-1.5 transition hover:border-white/40 hover:bg-zinc-800/70"
+                  onClick={() => goTo("vibe")}
+                >
+                  Edit vibe
+                </button>
+                <button
+                  type="button"
+                  className="rounded-full border border-white/20 bg-zinc-900/45 px-3 py-1.5 transition hover:border-white/40 hover:bg-zinc-800/70"
+                  onClick={() => goTo("basics")}
+                >
+                  Edit basics
+                </button>
+              </div>
               <OnboardingSummary answers={answers} watchRegion={viewerPrefs.watchRegion} />
               <div className="onboarding-nav flex items-center justify-center gap-3">
                 <NavButton onClick={goBack}>Back</NavButton>

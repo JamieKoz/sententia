@@ -78,6 +78,7 @@ export function DiscoveryAudiencePicker({
                 : "onboarding-choice-card onboarding-choice-card--tall"
             }
             onClick={() => onChange(buildDiscoveryFamiliarities(popTokens, option.id))}
+            aria-pressed={selected}
           >
             <span className="text-base font-semibold text-white sm:text-lg">{option.label}</span>
             <span className="mt-2 text-xs text-zinc-300 sm:text-sm">{option.description}</span>

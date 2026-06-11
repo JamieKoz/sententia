@@ -287,15 +287,14 @@ export function QuestionsSection(props: {
           {step === "welcome" ? (
             <div key="welcome" className="onboarding-step onboarding-step--forward onboarding-welcome">
               <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl">Sententia</h1>
-              <p className="mt-2 text-[10px] italic leading-tight text-zinc-500 opacity-80">
-                Latin for an opinion, a vote, or a judicial decision
+              <p className="mt-2 text-[10px] italic leading-tight text-zinc-300 opacity-80">
+                an opinion, vote, or a judicial decision
               </p>
               <p className="mt-4 max-w-md text-base text-zinc-300 sm:text-lg">Stop scrolling. Start Watching.</p>
               {followUpTitle ? (
                 <div className="follow-up-slide-in mt-6 max-w-md rounded-2xl border border-violet-300/35 bg-violet-900/20 px-4 py-3 text-left">
-                  <p className="text-xs uppercase tracking-wide text-violet-200">Quick follow-up</p>
                   <p className="mt-1 text-sm text-zinc-100">
-                    Last time we picked <span className="font-medium">{followUpTitle.name}</span>. Did you watch it?
+                    Your last pick was <span className="font-medium">{followUpTitle.name}</span>. Did you watch it?
                   </p>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <button

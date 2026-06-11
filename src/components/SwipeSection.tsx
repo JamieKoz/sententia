@@ -52,7 +52,7 @@ export function SwipeSection(props: {
   return (
     <section>
       <div className="relative flex items-center justify-center swipe-deck-enter">
-        <div className="mt-2 ml-12 flex items-center gap-3">
+        <div className="mt-2 ml-16 flex items-center gap-3">
           <span
             key={deckCursor}
             className="inline-block animate-pulse text-3xl font-bold tracking-tight text-zinc-100 transition-all duration-300"

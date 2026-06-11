@@ -62,10 +62,10 @@ export function DeckBuildingOverlay({
 
           <div className="absolute inset-0 z-10 flex items-center justify-center px-6">
             <div className="max-w-sm text-center">
-              <p className="text-base font-semibold text-zinc-100 sm:text-lg shadow-2xl">Building your deck</p>
+              <p className="text-base font-semibold text-white sm:text-lg shadow-2xl">Building your deck</p>
               <p
                 key={lineIndex}
-                className="deck-status-line mt-2 min-h-[2.75rem] text-sm text-zinc-300 shadow-2xl"
+                className="deck-status-line mt-2 min-h-[2.75rem] text-sm text-white shadow-2xl"
               >
                 {STATUS_LINES[lineIndex]}
               </p>

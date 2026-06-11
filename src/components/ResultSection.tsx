@@ -127,7 +127,7 @@ export function ResultSection({
           onClick={onWatchTrailer}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-            <path d="M23.5 6.2a3.1 3.1 0 0 0-2.2-2.2C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.3.5A3.1 3.1 0 0 0 .5 6.2 33 33 0 0 0 0 12a33 33 0 0 0 .5 5.8 3.1 3.1 0 0 0 2.2 2.2c1.8.5 9.3.5 9.3.5s7.5 0 9.3-.5a3.1 3.1 0 0 0 2.2-2.2 33 33 0 0 0 .5-5.8 33 33 0 0 0-.5-5.8zM9.5 15.5v-7l6.2 3.5z"/>
+            <path d="M23.5 6.2a3.1 3.1 0 0 0-2.2-2.2C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.3.5A3.1 3.1 0 0 0 .5 6.2 33 33 0 0 0 0 12a33 33 0 0 0 .5 5.8 3.1 3.1 0 0 0 2.2 2.2c1.8.5 9.3.5 9.3.5s7.5 0 9.3-.5a3.1 3.1 0 0 0 2.2-2.2 33 33 0 0 0 .5-5.8 33 33 0 0 0-.5-5.8zM9.5 15.5v-7l6.2 3.5z" />
           </svg>
           Watch trailer
         </button>
@@ -161,15 +161,14 @@ function SeenReactionButtons({
   onChange: (reaction?: "up" | "down") => void;
 }) {
   return (
-    <div className="rounded-xl border border-white/20 bg-zinc-900/55 p-2">
-      <div className="flex items-center gap-2">
+    <div className="rounded-xl p-2">
+      <div className="flex justify-center items-center gap-2">
         <button
           type="button"
-          className={`grid h-9 w-9 place-items-center rounded-full border text-base transition active:scale-90 ${
-            reaction === "up"
-              ? "border-emerald-300/75 bg-emerald-700/50 text-emerald-100 scale-110"
-              : "border-emerald-300/50 bg-emerald-900/30 text-emerald-100 hover:bg-emerald-800/45 hover:scale-105"
-          }`}
+          className={`grid h-9 w-9 place-items-center rounded-full border text-base transition active:scale-90 ${reaction === "up"
+            ? "border-emerald-300/75 bg-emerald-700/50 text-emerald-100 scale-110"
+            : "border-emerald-300/50 bg-emerald-900/30 text-emerald-100 hover:bg-emerald-800/45 hover:scale-105"
+            }`}
           onClick={() => onChange(reaction === "up" ? undefined : "up")}
           aria-label="Liked this film"
           aria-pressed={reaction === "up"}
@@ -178,11 +177,10 @@ function SeenReactionButtons({
         </button>
         <button
           type="button"
-          className={`grid h-9 w-9 place-items-center rounded-full border text-base transition active:scale-90 ${
-            reaction === "down"
-              ? "border-rose-300/75 bg-rose-700/50 text-rose-100 scale-110"
-              : "border-rose-300/50 bg-rose-900/30 text-rose-100 hover:bg-rose-800/45 hover:scale-105"
-          }`}
+          className={`grid h-9 w-9 place-items-center rounded-full border text-base transition active:scale-90 ${reaction === "down"
+            ? "border-rose-300/75 bg-rose-700/50 text-rose-100 scale-110"
+            : "border-rose-300/50 bg-rose-900/30 text-rose-100 hover:bg-rose-800/45 hover:scale-105"
+            }`}
           onClick={() => onChange(reaction === "down" ? undefined : "down")}
           aria-label="Did not like this film"
           aria-pressed={reaction === "down"}
@@ -191,11 +189,10 @@ function SeenReactionButtons({
         </button>
         <button
           type="button"
-          className={`grid h-9 w-9 place-items-center rounded-full border text-base transition active:scale-90 ${
-            isSaved
-              ? "border-violet-300/75 bg-violet-700/45 text-violet-100 scale-110"
-              : "border-white/25 bg-zinc-900/60 text-zinc-200 hover:bg-zinc-800/70 hover:scale-105"
-          }`}
+          className={`grid h-9 w-9 place-items-center rounded-full border text-base transition active:scale-90 ${isSaved
+            ? "border-violet-300/75 bg-violet-700/45 text-violet-100 scale-110"
+            : "border-white/25 bg-zinc-900/60 text-zinc-200 hover:bg-zinc-800/70 hover:scale-105"
+            }`}
           onClick={onToggleSave}
           aria-label={isSaved ? "Saved for later" : "Save for later"}
           aria-pressed={isSaved}

@@ -44,7 +44,7 @@ export function watchDestination(title: WatchLinkTitle, _watchRegion: string): W
   return "justwatch";
 }
 
-export function buildWatchUrl(title: WatchLinkTitle, watchRegion: string): string {
+export async function buildWatchUrl(title: WatchLinkTitle, watchRegion: string): Promise<string> {
   const query = encodeURIComponent(`${title.name} ${title.releaseYear}`);
   const region = getWatchRegionOption(watchRegion);
 
@@ -58,14 +58,16 @@ export function buildWatchUrl(title: WatchLinkTitle, watchRegion: string): strin
       return `https://www.primevideo.com/detail?gti=${encodeURIComponent(gti)}${tagParams}`;
     }
 
+    return buildPrimeSearchUrl(query, region.code);
+
     // Without a GTI/ASIN (requires Amazon PA API to obtain), fall back to a
     // JustWatch title page — a single "Watch on Prime" click from there goes
     // directly to the Prime Video detail page, which is better than a raw
     // Prime Video keyword search.
-    return buildJustWatchUrl(title, region.justwatchLocale, query);
+    //return buildJustWatchUrl(title, region.justwatchLocale, query);
   }
 
-  return buildJustWatchUrl(title, region.justwatchLocale, query);
+  return await buildJustWatchUrl(title, region.justwatchLocale, query);
 }
 
 function getPrimeVideoGti(title: WatchLinkTitle): string | null {
@@ -76,14 +78,35 @@ function getPrimeVideoGti(title: WatchLinkTitle): string | null {
   );
 }
 
-function buildJustWatchUrl(title: WatchLinkTitle, locale: string, query: string): string {
+async function buildJustWatchUrl(
+  title: WatchLinkTitle,
+  locale: string,
+  query: string
+): Promise<string> {
+  const searchUrl = `https://www.justwatch.com/${locale}/search?q=${query}`;
+
+  let candidate: string | null = null;
+
   if (title.type === "movie") {
-    return `https://www.justwatch.com/${locale}/movie/${slugifyJustWatchTitle(title.name)}`;
+    candidate = `https://www.justwatch.com/${locale}/movie/${slugifyJustWatchTitle(title.name)}`;
+  } else if (title.type === "series") {
+    candidate = `https://www.justwatch.com/${locale}/tv-show/${slugifyJustWatchTitle(title.name)}`;
+  } else {
+    return searchUrl;
   }
-  if (title.type === "series") {
-    return `https://www.justwatch.com/${locale}/tv-show/${slugifyJustWatchTitle(title.name)}`;
+
+  try {
+    const response = await fetch(candidate, { method: "HEAD", redirect: "follow" });
+    return response.ok ? candidate : searchUrl;
+  } catch {
+    return searchUrl;
   }
-  return `https://www.justwatch.com/${locale}/search?q=${query}`;
+}
+
+function buildPrimeSearchUrl(query: string, regionCode: string): string {
+  const tag = encodeURIComponent(amazonTagForRegion(regionCode));
+  const tagParams = tag ? `&linkCode=xm2&tag=${tag}` : "";
+  return `https://www.primevideo.com/search/ref=atv_nb_sr?phrase=${query}${tagParams}`;
 }
 
 function slugifyJustWatchTitle(value: string): string {
@@ -113,10 +136,10 @@ export function trackWatchClick(
   });
 }
 
-export function openWatchUrl(title: WatchLinkTitle, watchRegion: string): void {
+export async function openWatchUrl(title: WatchLinkTitle, watchRegion: string): Promise<void> {
   const region = normalizeWatchRegion(watchRegion);
   const destination = watchDestination(title, region);
-  const url = buildWatchUrl(title, region);
+  const url = await buildWatchUrl(title, region);
   trackWatchClick(title, destination, region);
   window.open(url, "_blank", "noopener,noreferrer");
 }

@@ -286,7 +286,9 @@ export function QuestionsSection(props: {
         <div className="onboarding-content">
           {step === "welcome" ? (
             <div key="welcome" className="onboarding-step onboarding-step--forward onboarding-welcome">
-              <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl">Sententia</h1>
+              <h1 className="text-4xl  uppercase tracking-wide font-semibold tracking-tight text-white sm:text-5xl md:text-6xl flex items-center">
+                <img src="/icons/sententia-v3.png" height={"200px"} width={"150px"} />
+                Sententia</h1>
               <p className="mt-2 text-[10px] italic leading-tight text-zinc-300 opacity-80">
                 an opinion, vote, or a judicial decision
               </p>

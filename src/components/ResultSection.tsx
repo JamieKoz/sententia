@@ -41,6 +41,7 @@ export function ResultSection({
       <div className="grid gap-5 md:grid-cols-[220px_1fr] md:items-start">
         <aside>
           <div className="mx-auto grid w-full max-w-[220px] place-items-center overflow-hidden rounded-2xl bg-zinc-800/70 text-4xl font-semibold aspect-[2/3]">
+
             {poster ? (
               <img
                 className="h-full w-full object-cover object-center"
@@ -54,7 +55,15 @@ export function ResultSection({
             )}
           </div>
 
-          <div className="mt-3">
+          <div className="mt-3 relative">
+
+            {toast ? (
+              <div className="pointer-events-none absolute bottom-full left-1/2 z-[90] mb-3 w-max -translate-x-1/2 px-4 transition-all animate-bounce-short">
+                <p className="rounded-full border border-white/20 bg-zinc-950/90 px-3 py-1.5 text-xs text-zinc-100 shadow-xl backdrop-blur-md">
+                  {toast}
+                </p>
+              </div>
+            ) : null}
             <SeenReactionButtons
               reaction={seenReaction}
               isSaved={isSaved}
@@ -138,13 +147,6 @@ export function ResultSection({
           Pick another
         </button>
       </div>
-      {toast ? (
-        <div className="pointer-events-none fixed inset-x-0 bottom-6 z-[90] flex justify-center px-4">
-          <p className="rounded-full border border-white/20 bg-zinc-950/90 px-4 py-2 text-xs text-zinc-100 shadow-xl backdrop-blur-md">
-            {toast}
-          </p>
-        </div>
-      ) : null}
     </section>
   );
 }
@@ -163,35 +165,51 @@ function SeenReactionButtons({
   return (
     <div className="rounded-xl p-2">
       <div className="flex justify-center items-center gap-2">
+        {/* LIKE BUTTON */}
         <button
           type="button"
-          className={`grid h-9 w-9 place-items-center rounded-full border text-base transition active:scale-90 ${reaction === "up"
-            ? "border-emerald-300/75 bg-emerald-700/50 text-emerald-100 scale-110"
-            : "border-emerald-300/50 bg-emerald-900/30 text-emerald-100 hover:bg-emerald-800/45 hover:scale-105"
+          /* Added 'group relative' to parent button */
+          className={`group relative grid h-9 w-9 place-items-center rounded-full border text-base transition active:scale-90 ${reaction === "up"
+              ? "border-emerald-300/75 bg-emerald-700/50 text-emerald-100 scale-110"
+              : "border-emerald-300/50 bg-emerald-900/30 text-emerald-100 hover:bg-emerald-800/45 hover:scale-105"
             }`}
           onClick={() => onChange(reaction === "up" ? undefined : "up")}
           aria-label="Liked this film"
           aria-pressed={reaction === "up"}
         >
           👍
+          {/* Tooltip */}
+          <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max -translate-x-1/2 rounded-md border border-white/10 bg-zinc-900/95 px-2 py-1 text-[11px] font-medium text-zinc-200 opacity-0 shadow-lg backdrop-blur-sm transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100 translate-y-1">
+            Like
+          </span>
         </button>
+
+        {/* DISLIKE BUTTON */}
         <button
           type="button"
-          className={`grid h-9 w-9 place-items-center rounded-full border text-base transition active:scale-90 ${reaction === "down"
-            ? "border-rose-300/75 bg-rose-700/50 text-rose-100 scale-110"
-            : "border-rose-300/50 bg-rose-900/30 text-rose-100 hover:bg-rose-800/45 hover:scale-105"
+          /* Added 'group relative' to parent button */
+          className={`group relative grid h-9 w-9 place-items-center rounded-full border text-base transition active:scale-90 ${reaction === "down"
+              ? "border-rose-300/75 bg-rose-700/50 text-rose-100 scale-110"
+              : "border-rose-300/50 bg-rose-900/30 text-rose-100 hover:bg-rose-800/45 hover:scale-105"
             }`}
           onClick={() => onChange(reaction === "down" ? undefined : "down")}
           aria-label="Did not like this film"
           aria-pressed={reaction === "down"}
         >
           👎
+          {/* Tooltip */}
+          <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max -translate-x-1/2 rounded-md border border-white/10 bg-zinc-900/95 px-2 py-1 text-[11px] font-medium text-zinc-200 opacity-0 shadow-lg backdrop-blur-sm transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100 translate-y-1">
+            Dislike
+          </span>
         </button>
+
+        {/* SAVE BUTTON */}
         <button
           type="button"
-          className={`grid h-9 w-9 place-items-center rounded-full border text-base transition active:scale-90 ${isSaved
-            ? "border-violet-300/75 bg-violet-700/45 text-violet-100 scale-110"
-            : "border-white/25 bg-zinc-900/60 text-zinc-200 hover:bg-zinc-800/70 hover:scale-105"
+          /* Added 'group relative' to parent button */
+          className={`group relative grid h-9 w-9 place-items-center rounded-full border text-base transition active:scale-90 ${isSaved
+              ? "border-violet-300/75 bg-violet-700/45 text-violet-100 scale-110"
+              : "border-white/25 bg-zinc-900/60 text-zinc-200 hover:bg-zinc-800/70 hover:scale-105"
             }`}
           onClick={onToggleSave}
           aria-label={isSaved ? "Saved for later" : "Save for later"}
@@ -200,6 +218,10 @@ function SeenReactionButtons({
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
             <path fill="currentColor" d="M5 3h14a2 2 0 0 1 2 2v14l-4-2-4 2-4-2-4 2V5a2 2 0 0 1 2-2" />
           </svg>
+          {/* Tooltip */}
+          <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max -translate-x-1/2 rounded-md border border-white/10 bg-zinc-900/95 px-2 py-1 text-[11px] font-medium text-zinc-200 opacity-0 shadow-lg backdrop-blur-sm transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100 translate-y-1">
+            {isSaved ? 'Remove Bookmark' : 'Save for later'}
+          </span>
         </button>
       </div>
     </div>

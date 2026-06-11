@@ -11,7 +11,6 @@ import {
   RUNTIME_OPTIONS,
   TYPE_OPTIONS
 } from "../config/options";
-import { SettingsMenu } from "./SettingsMenu";
 import type { OnboardingAnswers, Title, ViewerPrefs } from "../types";
 
 type OnboardingStep = "welcome" | "vibe" | "basics" | "review";
@@ -168,13 +167,6 @@ export function QuestionsSection(props: {
     onToggleProvider,
     onToggleExclusion,
     viewerPrefs,
-    onWatchRegionChange,
-    onClearCache,
-    onToggleTasteProfile,
-    onToggleLibrary,
-    onToggleHistory,
-    savedCount,
-    watchedCount,
     onStartSolo,
     onStartGroup,
     onStartFromLastTime,

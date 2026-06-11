@@ -1322,12 +1322,6 @@ body {
     opacity 0.22s ease;
 }
 
-.showdown-choice:hover::after,
-.showdown-choice:focus-within::after {
-  #border-color: rgba(196, 181, 253, 0.5);
-  #box-shadow: 0 16px 42px rgba(91, 33, 182, 0.22);
-}
-
 .showdown-choice__poster {
   position: relative;
   overflow: hidden;

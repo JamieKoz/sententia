@@ -2,7 +2,7 @@
 
 # --- DEFAULT / STAGING ENVIRONMENT ---
 # Running `npx wrangler deploy` targets this.
-name = "sententia-staging"
+name = "sententia"
 compatibility_date = "2026-04-12"
 main = "./worker/index.ts"
 

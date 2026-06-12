@@ -88,6 +88,7 @@ export function App() {
   const {
     isBuildingDeck,
     deckBuildError,
+    deckBuildProgress,
     clearDeckBuildError,
     canUndo,
     startSwipeRound,
@@ -540,6 +541,7 @@ export function App() {
             answers={session.answers}
             isBuildingDeck={isBuildingDeck || groupFlow.isBusy}
             deckBuildError={deckBuildError}
+            deckBuildProgress={deckBuildProgress}
             onDismissDeckBuildError={clearDeckBuildError}
             customYearStartPct={customYearStartPct}
             customYearEndPct={customYearEndPct}

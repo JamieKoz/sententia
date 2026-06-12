@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { DeckBuildingOverlay } from "./DeckBuildingOverlay";
+import type { DeckBuildProgress } from "../services/deckBuildProgress";
 import { AvoidTonightPicker } from "./AvoidTonightPicker";
 import { DiscoveryAudiencePicker, DiscoveryPopularityPicker } from "./DiscoveryStylePicker";
 import { LanguageMultiSelect } from "./LanguageMultiSelect";
@@ -124,6 +125,7 @@ export function QuestionsSection(props: {
   answers: OnboardingAnswers;
   isBuildingDeck: boolean;
   deckBuildError?: string | null;
+  deckBuildProgress?: DeckBuildProgress | null;
   onDismissDeckBuildError?: () => void;
   customYearStartPct: number;
   customYearEndPct: number;
@@ -154,6 +156,7 @@ export function QuestionsSection(props: {
     answers,
     isBuildingDeck,
     deckBuildError,
+    deckBuildProgress,
     onDismissDeckBuildError,
     customYearStartPct,
     customYearEndPct,
@@ -607,7 +610,11 @@ export function QuestionsSection(props: {
       </div>
 
       {isBuildingDeck || deckBuildError ? (
-        <DeckBuildingOverlay error={deckBuildError} onDismiss={onDismissDeckBuildError} />
+        <DeckBuildingOverlay
+          error={deckBuildError}
+          progress={deckBuildProgress}
+          onDismiss={onDismissDeckBuildError}
+        />
       ) : null}
     </>
   );

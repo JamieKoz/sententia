@@ -14,12 +14,14 @@ import { buildDeck, DECK_SIZE, fillDeckFromSources } from "../state/machine";
 import type { OnboardingAnswers, TasteProfile, Title } from "../types";
 import { mergeCatalog } from "../utils/appState";
 import { loadSoloHistory, loadGroupHistory } from "./storage";
+import { DeckBuildProgressReporter, type DeckBuildProgress } from "./deckBuildProgress";
 
 interface BuildRecommendationDeckParams {
   answers: OnboardingAnswers;
   profile: TasteProfile;
   catalog: Title[];
   watchRegion: string;
+  onProgress?: (progress: DeckBuildProgress) => void;
 }
 
 const AI_GENERATION_CANDIDATE_COUNT = 30;
@@ -110,6 +112,7 @@ async function streamAndResolveSuggestions(params: {
   count: number;
   excludeNames?: string[];
   targetResolvedCount: number;
+  progress?: DeckBuildProgressReporter;
 }): Promise<Title[]> {
   const {
     answers,
@@ -120,7 +123,8 @@ async function streamAndResolveSuggestions(params: {
     tmdbEnabled,
     count,
     excludeNames,
-    targetResolvedCount
+    targetResolvedCount,
+    progress
   } = params;
 
   const deckTitles: Title[] = [];
@@ -146,6 +150,7 @@ async function streamAndResolveSuggestions(params: {
     },
     (suggestion) => {
       if (abortController.signal.aborted) return;
+      progress?.noteSuggestion(suggestion.name);
       const currentIndex = suggestionIndex;
       suggestionIndex += 1;
       const task = resolveStreamedSuggestion(
@@ -160,6 +165,11 @@ async function streamAndResolveSuggestions(params: {
         if (!filterDeckTitles([title], answers, true, blockedIds).length) return;
         seenIds.add(title.id);
         deckTitles.push(title);
+        progress?.noteResolved({
+          name: title.name,
+          type: title.type,
+          posterPath: title.posterPath
+        });
         maybeAbort();
       });
       pending.push(task);
@@ -178,8 +188,9 @@ async function accumulateAiDeckTitles(params: {
   historyHints: AiHistoryHints;
   blockedIds: Set<string>;
   tmdbEnabled: boolean;
+  progress?: DeckBuildProgressReporter;
 }): Promise<Title[]> {
-  const { answers, profile, watchRegion, historyHints, blockedIds, tmdbEnabled } = params;
+  const { answers, profile, watchRegion, historyHints, blockedIds, tmdbEnabled, progress } = params;
   let deckTitles = await streamAndResolveSuggestions({
     answers,
     profile,
@@ -188,7 +199,8 @@ async function accumulateAiDeckTitles(params: {
     blockedIds,
     tmdbEnabled,
     count: AI_GENERATION_CANDIDATE_COUNT,
-    targetResolvedCount: DECK_SIZE
+    targetResolvedCount: DECK_SIZE,
+    progress
   });
 
   let refillRound = 0;
@@ -203,7 +215,8 @@ async function accumulateAiDeckTitles(params: {
       tmdbEnabled,
       count: AI_REFILL_CANDIDATE_COUNT,
       excludeNames: deckTitles.map((title) => title.name),
-      targetResolvedCount: DECK_SIZE - deckTitles.length
+      targetResolvedCount: DECK_SIZE - deckTitles.length,
+      progress
     });
     if (refillTitles.length === 0) break;
 
@@ -218,7 +231,8 @@ async function accumulateAiDeckTitles(params: {
 export async function buildRecommendationDeck(
   params: BuildRecommendationDeckParams
 ): Promise<BuildRecommendationDeckResult> {
-  const { answers, profile, catalog, watchRegion } = params;
+  const { answers, profile, catalog, watchRegion, onProgress } = params;
+  const progress = onProgress ? new DeckBuildProgressReporter(onProgress) : undefined;
   const { ai: aiEnabled, tmdb: tmdbEnabled } = await loadBackendConfig();
   const blockedIds = new Set(profile.rejectedIds);
   let deckTitles: Title[] = [];
@@ -233,12 +247,14 @@ export async function buildRecommendationDeck(
       watchRegion,
       historyHints,
       blockedIds,
-      tmdbEnabled
+      tmdbEnabled,
+      progress
     });
     usedAiSuggestions = deckTitles.length > 0;
   }
 
   if (deckTitles.length === 0) {
+    progress?.setPhase("fallback");
     const activeProfile = answers.usePersonalization ? profile : createDefaultProfile();
     const pool = prepareSwipeCandidatePool(catalog, answers, activeProfile);
     const sorted = rankTitles(pool.length ? pool : catalog, answers, activeProfile);
@@ -268,6 +284,7 @@ export async function buildRecommendationDeck(
   let deck = fillDeckFromSources(primaryIds, fallbackIds, DECK_SIZE);
 
   if (tmdbEnabled && deck.length > 0) {
+    progress?.setPhase("finalizing");
     const selectedTitles = deck
       .map((id) => catalogForDeck.find((title) => title.id === id))
       .filter((title): title is Title => Boolean(title));

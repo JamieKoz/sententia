@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { THUMBNAIL_PATHS } from "../data/thumbnailManifest";
+import type { DeckBuildProgress } from "../services/deckBuildProgress";
 
 const STATUS_LINES = [
   "Asking AI to think about your vibe…",
@@ -13,9 +14,11 @@ const STATUS_LINES = [
 
 export function DeckBuildingOverlay({
   error,
+  progress,
   onDismiss
 }: {
   error?: string | null;
+  progress?: DeckBuildProgress | null;
   onDismiss?: () => void;
 }) {
   const [lineIndex, setLineIndex] = useState(0);
@@ -33,6 +36,10 @@ export function DeckBuildingOverlay({
     return () => window.clearInterval(id);
   }, [error]);
 
+  const lockedInCount = progress?.resolvedCount ?? 0;
+  const lockedInTarget = progress?.targetCount ?? 0;
+  const showLockedIn = lockedInCount > 0 && lockedInTarget > 0;
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/62 backdrop-blur-md"
@@ -44,6 +51,15 @@ export function DeckBuildingOverlay({
         <>
           <div className="deck-building-thumbnail-strip" aria-hidden="true">
             <div className="thumbnail-row">
+
+              {showLockedIn ? (
+                <p
+                  key={lockedInCount}
+                  className="deck-status-line text-sm font-medium text-zinc-200 shadow-2xl text-center"
+                >
+                  Locked in {lockedInCount} of {lockedInTarget} picks
+                </p>
+              ) : null}
               <div className="thumbnail-row-track" style={{ animationDuration: "65s" }}>
                 {[...stripImages, ...stripImages].map((src, index) => (
                   <img

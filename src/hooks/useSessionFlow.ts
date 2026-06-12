@@ -8,6 +8,7 @@ import type { OnboardingAnswers, SessionState, TasteProfile } from "../types";
 import { cloneProfile, cloneSession, mergeCatalog } from "../utils/appState";
 import { sessionReducer } from "../state/sessionReducer";
 import { buildRecommendationDeck } from "../services/deckBuilder";
+import { createInitialDeckBuildProgress, type DeckBuildProgress } from "../services/deckBuildProgress";
 import { nextPair } from "../state/machine";
 import { useSessionStore } from "../state/sessionStore";
 
@@ -19,6 +20,7 @@ export function useSessionFlow(params: {
 
   const [isBuildingDeck, setIsBuildingDeck] = useState(false);
   const [deckBuildError, setDeckBuildError] = useState<string | null>(null);
+  const [deckBuildProgress, setDeckBuildProgress] = useState<DeckBuildProgress | null>(null);
   const [lastSwipeSnapshot, setLastSwipeSnapshot] = useState<{ session: SessionState; profile: TasteProfile } | null>(null);
 
   async function startSwipeRound(overrideAnswers?: OnboardingAnswers) {
@@ -26,6 +28,7 @@ export function useSessionFlow(params: {
     clearSessionDraft();
     setIsBuildingDeck(true);
     setDeckBuildError(null);
+    setDeckBuildProgress(createInitialDeckBuildProgress());
     setLastSwipeSnapshot(null);
     saveLastAnswers({ ...activeAnswers, quickModeId: undefined });
     trackEvent("deck_build_start", {
@@ -38,7 +41,8 @@ export function useSessionFlow(params: {
         answers: activeAnswers,
         profile: activeProfile,
         catalog,
-        watchRegion
+        watchRegion,
+        onProgress: setDeckBuildProgress
       });
 
       if (deckTitles.length > 0) {
@@ -56,11 +60,13 @@ export function useSessionFlow(params: {
       );
     } finally {
       setIsBuildingDeck(false);
+      setDeckBuildProgress(null);
     }
   }
 
   function clearDeckBuildError() {
     setDeckBuildError(null);
+    setDeckBuildProgress(null);
   }
 
   function handleSwipe(action: "keep" | "pass") {
@@ -120,6 +126,7 @@ export function useSessionFlow(params: {
   return {
     isBuildingDeck,
     deckBuildError,
+    deckBuildProgress,
     clearDeckBuildError,
     canUndo: Boolean(lastSwipeSnapshot),
     startSwipeRound,

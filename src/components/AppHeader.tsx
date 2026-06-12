@@ -28,11 +28,11 @@ export function AppHeader({
         <div className="flex items-center">
           <a href="/" className="flex items-center no-underline">
             <img
-              src="/icons/sententia-v4.svg"
+              src="/icons/sententia-v6.svg"
               alt=""
-              className={compact ? "h-6 w-auto sm:h-16" : "h-7 w-auto sm:h-9 md:h-16"}
+              className={compact ? "h-10 sm:h-16" : "h-7 w-auto sm:h-9 md:h-16"}
             />
-            <div className="ml-6">
+            <div className="ml-3 md:ml-6">
               <h1 className={compact ? "text-xl font-bold tracking-tight sm:text-xl uppercase" : "text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl"}>
                 Sententia
               </h1>

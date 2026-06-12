@@ -33,7 +33,6 @@ const ThumbnailRow = memo(function ThumbnailRow({
   reverse,
   durationSec,
   depth,
-  scrollOffset
 }: ThumbnailRowProps) {
   const loop = [...images, ...images];
 
@@ -41,7 +40,6 @@ const ThumbnailRow = memo(function ThumbnailRow({
     <div
       className="thumbnail-row"
       style={{
-        transform: `translateY(${scrollOffset * (0.04 + depth * 0.018)}px)`,
         opacity: 0.35 + depth * 0.1
       }}
     >

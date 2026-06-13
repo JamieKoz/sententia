@@ -6,7 +6,7 @@ Push-triggered deploys should publish the default Worker from `wrangler.toml`.
 The Worker name is `sententia`, so the staging Workers URL should be:
 
 ```text
-https://sententia.jamiekozminska.workers.dev
+https://sententia-staging.jamiekozminska.workers.dev
 ```
 
 The staging deploy command is:
@@ -20,7 +20,7 @@ npm run deploy
 ## Production
 
 Production deploys to `sententia.tv` are manual only and publish a separate
-Worker named `sententia-production`:
+Worker named `sententia`:
 
 ```bash
 npm run deploy:production

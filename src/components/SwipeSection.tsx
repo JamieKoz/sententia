@@ -57,8 +57,10 @@ export function SwipeSection(props: {
 
   return (
     <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="relative flex shrink-0 items-center justify-between px-1 pt-0.5 text-xs sm:text-sm swipe-deck-enter">
-        <div className="flex items-center gap-2">
+      <div className="relative grid grid-cols-3 items-center px-1 pt-0.5 text-xs sm:text-sm swipe-deck-enter">
+        <div />
+
+        <div className="flex items-center justify-center gap-2">
           <span
             key={deckCursor}
             className="inline-block animate-pulse text-lg font-bold tracking-tight text-zinc-100 sm:text-xl"
@@ -67,7 +69,8 @@ export function SwipeSection(props: {
           </span>
           <span className="text-zinc-400">remaining</span>
         </div>
-        <span className="text-zinc-500">{shortlistLength} shortlisted</span>
+
+        <span className="text-zinc-500 justify-self-end">{shortlistLength} shortlisted</span>
       </div>
 
       <div className="relative mt-1 flex min-h-0 flex-1 items-center justify-center">

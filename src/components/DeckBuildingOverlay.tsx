@@ -36,7 +36,7 @@ export function DeckBuildingOverlay({
     return () => window.clearInterval(id);
   }, [error]);
 
-  const lockedInCount = progress?.resolvedCount ?? 0;
+  const lockedInCount = Math.min(progress?.resolvedCount ?? 0, progress?.targetCount ?? 0);
   const lockedInTarget = progress?.targetCount ?? 0;
   const showLockedIn = lockedInCount > 0 && lockedInTarget > 0;
 

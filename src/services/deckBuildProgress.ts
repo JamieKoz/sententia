@@ -38,7 +38,8 @@ export function deckBuildStatusLine(progress: DeckBuildProgress | null | undefin
   if (progress.phase === "finalizing") return "Polishing posters and streaming details…";
   if (progress.phase === "fallback") return "Curating strong matches from your taste profile…";
   if (progress.resolvedCount > 0) {
-    return `Locked in ${progress.resolvedCount} of ${progress.targetCount} picks…`;
+    const lockedIn = Math.min(progress.resolvedCount, progress.targetCount);
+    return `Locked in ${lockedIn} of ${progress.targetCount} picks…`;
   }
   if (progress.suggestedCount > 0) {
     return `Considering ${progress.suggestedCount} title ideas from AI…`;
@@ -77,10 +78,11 @@ export class DeckBuildProgressReporter {
   noteResolved(title: DeckBuildPreviewTitle) {
     const trimmed = title.name.trim();
     if (!trimmed) return;
+    const nextResolvedCount = Math.min(this.state.resolvedCount + 1, this.state.targetCount);
     this.state = {
       ...this.state,
       phase: "resolving",
-      resolvedCount: this.state.resolvedCount + 1,
+      resolvedCount: nextResolvedCount,
       recentResolved: prependUniquePreview(this.state.recentResolved, { ...title, name: trimmed }, MAX_RECENT)
     };
     this.emit();

@@ -46,6 +46,16 @@ function prevStep(step: OnboardingStep): OnboardingStep | null {
   return idx > 0 ? STEP_ORDER[idx - 1]! : null;
 }
 
+function vibeChoiceClass(selected: boolean, wide = false): string {
+  const base =
+    "flex min-h-[4.75rem] flex-col items-center justify-center rounded-2xl border px-3 py-2.5 text-center transition active:scale-[0.98] sm:min-h-[6.5rem] sm:rounded-3xl sm:px-4 sm:py-3";
+  const layout = wide ? " w-full" : "";
+  if (selected) {
+    return `${base}${layout} border-violet-300/75 bg-gradient-to-br from-violet-900/45 to-zinc-900/90 shadow-lg shadow-violet-900/25`;
+  }
+  return `${base}${layout} border-white/20 bg-zinc-900/70 hover:border-violet-300/45 hover:bg-zinc-900/85`;
+}
+
 function StepFrame({
   step,
   direction,
@@ -69,8 +79,11 @@ function StepFrame({
   const nextStepLabel = NEXT_STEP_LABELS[step];
 
   return (
-    <section key={step} className={`onboarding-step onboarding-step--${direction} flex w-full max-w-[64rem] flex-col items-center pt-[14dvh] text-center`}>
-      <div className="onboarding-progress" aria-label={`Step ${progressValue} of ${progressTotal}`}>
+    <section
+      key={step}
+      className={`onboarding-step onboarding-step--${direction} flex w-full max-w-4xl flex-col items-center px-1 pt-4 text-center sm:max-w-[64rem] sm:px-0 sm:pt-[10dvh] md:pt-[14dvh]`}
+    >
+      <div className="onboarding-progress w-full max-w-sm sm:max-w-md" aria-label={`Step ${progressValue} of ${progressTotal}`}>
         <div className="onboarding-progress__meta">
           <span>{`${stepDisplayLabel}`}</span>
           <span>{`${nextStepLabel}`}</span>
@@ -79,12 +92,14 @@ function StepFrame({
           <span className="onboarding-progress__fill" style={{ width: `${progressPct}%` }} />
         </div>
       </div>
-      <div className="mb-6 text-center sm:mb-8">
-        <h2 className="text-xl font-semibold tracking-tight text-white sm:text-2xl md:text-3xl">{title}</h2>
-        {subtitle ? <p className="mt-2 text-sm text-zinc-300 sm:text-base">{subtitle}</p> : null}
+      <div className="mb-4 text-center sm:mb-6">
+        <h2 className="text-lg font-semibold tracking-tight text-white sm:text-2xl md:text-3xl">{title}</h2>
+        {subtitle ? <p className="mt-1.5 text-xs text-zinc-300 sm:mt-2 sm:text-base">{subtitle}</p> : null}
       </div>
-      {children}
-      {footer}
+      <div className="flex w-full min-h-0 max-h-[calc(100dvh-13.5rem)] flex-col overflow-y-auto overscroll-contain sm:max-h-none sm:overflow-visible">
+        {children}
+      </div>
+      {footer ? <div className="mt-4 w-full shrink-0 sm:mt-6">{footer}</div> : null}
     </section>
   );
 }
@@ -267,7 +282,7 @@ export function QuestionsSection(props: {
 
         <div className="onboarding-content">
           {step === "welcome" ? (
-            <div key="welcome" className="onboarding-step onboarding-step--forward flex w-full flex-col items-center justify-start pt-[25dvh] text-center">
+            <div key="welcome" className="onboarding-step onboarding-step--forward flex w-full flex-col items-center justify-start px-1 pt-[12dvh] text-center sm:px-0 sm:pt-[25dvh]">
               <h1 className="mt-4 max-w-md text-[3rem] text-white">Your next watch<br />Decided now</h1>
               <h1 className="mt-4 max-w-md text-base text-white">Stop scrolling. Start watching.</h1>
               {followUpTitle ? (
@@ -322,37 +337,31 @@ export function QuestionsSection(props: {
               subtitle="Choose a preset for your vibe."
               footer={vibeNav}
             >
-              <div className="onboarding-quick-presets">
+              <div className="flex w-full flex-col gap-2 sm:gap-3">
                 <button
                   type="button"
-                  className={
-                    activeQuickModeId === NO_PREFERENCE_PRESET_ID
-                      ? "onboarding-choice-card onboarding-choice-card--compact onboarding-choice-card--wide-row onboarding-choice-card--selected"
-                      : "onboarding-choice-card onboarding-choice-card--compact onboarding-choice-card--wide-row"
-                  }
+                  className={vibeChoiceClass(activeQuickModeId === NO_PREFERENCE_PRESET_ID, true)}
                   onClick={applyNoPreference}
                   aria-pressed={activeQuickModeId === NO_PREFERENCE_PRESET_ID}
                 >
-                  <span className="text-base font-semibold text-white sm:text-lg">No strong preference</span>
-                  <span className="mt-2 text-xs text-zinc-300 sm:text-sm">Keep options broad and decide from defaults.</span>
+                  <span className="text-sm font-semibold text-white sm:text-lg">No strong preference</span>
+                  <span className="mt-1 text-[11px] leading-snug text-zinc-300 sm:mt-2 sm:text-sm">
+                    Keep options broad and decide from defaults.
+                  </span>
                 </button>
-                <div className="onboarding-quick-presets__grid">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
                   {QUICK_PRESETS.map((preset) => {
                     const selected = activeQuickModeId === preset.id;
                     return (
                       <button
                         key={preset.id}
                         type="button"
-                        className={
-                          selected
-                            ? "onboarding-choice-card onboarding-choice-card--compact onboarding-choice-card--selected"
-                            : "onboarding-choice-card onboarding-choice-card--compact"
-                        }
+                        className={vibeChoiceClass(selected)}
                         onClick={() => applyQuickPreset(preset)}
                         aria-pressed={selected}
                       >
-                        <span className="text-base font-semibold text-white sm:text-lg">{preset.label}</span>
-                        <span className="mt-2 text-xs text-zinc-300 sm:text-sm">{preset.description}</span>
+                        <span className="text-sm font-semibold text-white sm:text-lg">{preset.label}</span>
+                        <span className="mt-1 text-[11px] leading-snug text-zinc-300 sm:mt-2 sm:text-sm">{preset.description}</span>
                       </button>
                     );
                   })}

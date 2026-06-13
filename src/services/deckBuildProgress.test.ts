@@ -39,4 +39,16 @@ describe("DeckBuildProgressReporter", () => {
     expect(last?.recentSuggestions).toEqual(["Inception"]);
     expect(last?.recentResolved[0]?.name).toBe("Inception");
   });
+
+  it("does not report resolved count above the target", () => {
+    const onProgress = vi.fn();
+    const reporter = new DeckBuildProgressReporter(onProgress, 10);
+    for (let i = 0; i < 17; i += 1) {
+      reporter.noteResolved({ name: `Title ${i}`, type: "movie" });
+    }
+
+    const last = onProgress.mock.calls.at(-1)?.[0];
+    expect(last?.resolvedCount).toBe(10);
+    expect(deckBuildStatusLine(last)).toBe("Locked in 10 of 10 picks…");
+  });
 });

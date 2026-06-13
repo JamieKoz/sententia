@@ -28,7 +28,7 @@ class_name = "GroupRoomCoordinator"
 
 [[migrations]]
 tag = "v1"
-new_classes = ["DailyRateLimiter", "GroupRoomCoordinator"]
+new_sqlite_classes = ["DailyRateLimiter", "GroupRoomCoordinator"]
 
 # --- PRODUCTION ENVIRONMENT ---
 # Running `npx wrangler deploy --env production` targets this.
@@ -56,4 +56,4 @@ class_name = "GroupRoomCoordinator"
 
 [[env.production.migrations]]
 tag = "v1"
-new_classes = ["DailyRateLimiter", "GroupRoomCoordinator"]
+new_sqlite_classes = ["DailyRateLimiter", "GroupRoomCoordinator"]

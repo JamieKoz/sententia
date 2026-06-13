@@ -44,7 +44,7 @@ routes = [
 # Production KV namespace (Ideally a separate production KV ID)
 [[env.production.kv_namespaces]]
 binding = "RATE_KV"
-id = "YOUR_PRODUCTION_KV_ID_HERE" 
+id = "1ad424ad842f413aa65877cdd5024586"
 
 # Production Durable Objects
 [[env.production.durable_objects.bindings]]

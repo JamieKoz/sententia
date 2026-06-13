@@ -35,7 +35,7 @@ export function AppHeader({
             <img
               src="/icons/sententia-v6.svg"
               alt=""
-              className={compact ? "h-10 sm:h-16" : "h-7 w-auto sm:h-9 md:h-16"}
+              className={compact ? "h-9 w-auto sm:h-11" : "h-7 w-auto sm:h-9 md:h-16"}
             />
             <div className="ml-3 md:ml-6">
               <h1 className={compact ? "text-xl font-bold tracking-tight sm:text-xl uppercase" : "text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl"}>

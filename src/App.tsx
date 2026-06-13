@@ -428,6 +428,8 @@ export function App() {
     }
   }
 
+  const cardFocusedLayout = isCardFocusedPhase || isGroupCardFocusedPhase;
+
   return (
     <div className="relative min-h-screen">
       {clerkEnabled ? (
@@ -442,7 +444,13 @@ export function App() {
       <div className="pointer-events-none fixed inset-0 z-10 bg-[radial-gradient(ellipse_85%_70%_at_50%_45%,rgba(0,0,0,0.15),rgba(0,0,0,0.92))]" />
       <div className="pointer-events-none fixed inset-0 z-10 bg-gradient-to-b from-black/35 via-black/20 to-black/45" />
 
-      <main className="relative z-20 mx-auto max-w-5xl px-3 py-3 text-zinc-100 sm:px-4 sm:py-5 md:py-10 mb-16">
+      <main
+        className={
+          cardFocusedLayout
+            ? "relative z-20 mx-auto flex h-[100dvh] max-h-[100dvh] w-full max-w-5xl flex-col overflow-hidden px-2 py-2 text-zinc-100 sm:px-4 sm:py-3"
+            : "relative z-20 mx-auto mb-16 max-w-5xl px-3 py-3 text-zinc-100 sm:px-4 sm:py-5 md:py-10"
+        }
+      >
         <AppHeader
           viewerPrefs={viewerPrefs}
           onWatchRegionChange={handleWatchRegionChange}
@@ -455,6 +463,7 @@ export function App() {
           compact={isCardFocusedPhase || session.phase === "questions" || showGroupFlow || false}
         />
 
+        <div className={cardFocusedLayout ? "flex min-h-0 flex-1 flex-col overflow-hidden" : undefined}>
         {!showGroupFlow && showUtilityPage ? (
           <section className="utility-page-shell mx-auto max-w-5xl rounded-3xl border border-white/20 bg-zinc-950/45 p-5 shadow-2xl backdrop-blur-lg">
             <div className="mb-4 flex items-start justify-between gap-3">
@@ -749,6 +758,7 @@ export function App() {
         ) : null}
 
         {showdownDetailsTitle ? <ShowdownDetailsModal title={showdownDetailsTitle} onClose={() => setShowdownDetailsTitle(null)} /> : null}
+        </div>
       </main>
     </div>
   );

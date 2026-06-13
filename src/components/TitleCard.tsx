@@ -16,14 +16,6 @@ export function TitleCard({
   truncateOverview?: boolean;
 }) {
   const poster = tmdbPosterUrl(title.posterPath);
-  const overviewStyle = truncateOverview
-    ? {
-      display: "-webkit-box",
-      WebkitLineClamp: 3,
-      WebkitBoxOrient: "vertical" as const,
-      overflow: "hidden"
-    }
-    : undefined;
   return (
     <article
       className={
@@ -37,7 +29,7 @@ export function TitleCard({
           compact
             ? "mx-auto grid w-full max-w-[170px] place-items-center overflow-hidden rounded-xl bg-zinc-800/70 text-3xl font-semibold aspect-[2/3]"
             : compactMobile
-              ? "mx-auto grid w-full max-w-[190px] sm:max-w-[240px] place-items-center overflow-hidden rounded-xl bg-zinc-800/70 text-3xl sm:text-4xl font-semibold aspect-[2/3]"
+              ? "mx-auto grid w-[min(38vw,8.75rem)] place-items-center overflow-hidden rounded-xl bg-zinc-800/70 text-2xl font-semibold aspect-[2/3] sm:w-[9.5rem] sm:text-3xl"
               : "mx-auto grid w-full max-w-[260px] place-items-center overflow-hidden rounded-xl bg-zinc-800/70 text-4xl font-semibold aspect-[2/3]"
         }
       >
@@ -53,31 +45,37 @@ export function TitleCard({
           <span>{title.name.slice(0, 1)}</span>
         )}
       </div>
-      <div className={compactMobile ? "mt-2" : "mt-3"}>
-        <h3 className={compactMobile ? "text-base font-medium sm:text-lg md:text-xl" : "text-lg font-medium md:text-xl"}>
+      <div className={compactMobile ? "mt-1.5 min-h-0" : "mt-3"}>
+        <h3
+          className={
+            compactMobile
+              ? "line-clamp-2 text-sm font-medium leading-snug sm:text-base"
+              : "text-lg font-medium md:text-xl"
+          }
+        >
           {title.name} ({title.releaseYear})
         </h3>
-        <p className={compactMobile ? "mt-1 text-xs sm:text-sm text-zinc-300" : "mt-2 text-sm text-zinc-300"}>
+        <p className={compactMobile ? "mt-0.5 text-[11px] text-zinc-300 sm:text-sm" : "mt-2 text-sm text-zinc-300"}>
           {title.type} - {title.runtimeMinutes}m
           {typeof title.rating === "number" ? ` - ${title.rating.toFixed(1)}★` : ""}
         </p>
-        <p className={compactMobile ? "mt-1 text-sm text-zinc-100" : "mt-2 text-zinc-100"} style={overviewStyle}>
+        <p
+          className={
+            compactMobile
+              ? `mt-0.5 text-xs leading-snug text-zinc-100 sm:text-sm ${truncateOverview ? "line-clamp-2 sm:line-clamp-3" : ""}`
+              : `mt-2 text-zinc-100 ${truncateOverview ? "line-clamp-3" : ""}`
+          }
+        >
           {title.overview}
         </p>
-        {title.genres.length ? (
-          <p className={compactMobile ? "mt-1 text-xs sm:text-sm text-zinc-300" : "mt-2 text-sm text-zinc-300"}>
-            Genres: {title.genres.join(", ")}
-          </p>
+        {!compactMobile && title.genres.length ? (
+          <p className="mt-2 text-sm text-zinc-300">Genres: {title.genres.join(", ")}</p>
         ) : null}
-        {title.providers.length ? (
-          <p className={compactMobile ? "mt-1 text-xs sm:text-sm text-zinc-300" : "mt-1 text-sm text-zinc-300"}>
-            Streaming: {formatProviderLabels(title.providers)}
-          </p>
+        {!compactMobile && title.providers.length ? (
+          <p className="mt-1 text-sm text-zinc-300">Streaming: {formatProviderLabels(title.providers)}</p>
         ) : null}
-        {title.cast?.length ? (
-          <p className={compactMobile ? "mt-1 text-xs sm:text-sm text-zinc-300" : "mt-1 text-sm text-zinc-300"}>
-            Cast: {title.cast.join(", ")}
-          </p>
+        {!compactMobile && title.cast?.length ? (
+          <p className="mt-1 text-sm text-zinc-300">Cast: {title.cast.join(", ")}</p>
         ) : null}
       </div>
     </article>

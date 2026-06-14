@@ -76,20 +76,20 @@ export function SwipeSection(props: {
       <div className="relative mt-1 flex min-h-0 flex-1 items-center justify-center">
         {showBehindCard && nextSwipeTitle ? (
           <div className="pointer-events-none absolute inset-x-0 top-1/2 z-0 w-full -translate-y-1/2 px-0.5">
-            <div className="mx-auto w-full max-w-sm translate-y-2 scale-[0.97] overflow-hidden rounded-3xl opacity-25 sm:max-w-md">
-              <div className="overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/25 p-2 shadow-xl backdrop-blur-xl sm:p-3">
+            <div className="mx-auto w-full max-w-sm translate-y-2 scale-[0.97] overflow-hidden rounded-3xl opacity-25 sm:max-w-md md:max-w-lg lg:max-w-xl">
+              <div className="overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/25 p-2 shadow-xl backdrop-blur-xl sm:p-3 md:p-4 lg:p-5">
                 <TitleCard title={nextSwipeTitle} noTopMargin compactMobile truncateOverview />
               </div>
             </div>
           </div>
         ) : null}
 
-        <div className="relative z-10 w-full max-w-sm swipe-deck-enter swipe-deck-enter-delay-2 sm:max-w-md">
+        <div className="relative z-10 w-full max-w-sm swipe-deck-enter swipe-deck-enter-delay-2 sm:max-w-md md:max-w-lg lg:max-w-xl">
           <div
             className={
               isDraggingCard
-                ? "relative flex flex-col overflow-hidden rounded-3xl border border-white/20 bg-zinc-950/70 p-2 shadow-2xl backdrop-blur-xl touch-pan-y select-none transition-none sm:p-3"
-                : "relative flex flex-col overflow-hidden rounded-3xl border border-white/20 bg-zinc-950/70 p-2 shadow-2xl backdrop-blur-xl touch-pan-y select-none transition-transform duration-300 ease-out sm:p-3"
+                ? "relative flex flex-col overflow-hidden rounded-3xl border border-white/20 bg-zinc-950/70 p-2 shadow-2xl backdrop-blur-xl touch-pan-y select-none transition-none sm:p-3 md:p-4 lg:p-5"
+                : "relative flex flex-col overflow-hidden rounded-3xl border border-white/20 bg-zinc-950/70 p-2 shadow-2xl backdrop-blur-xl touch-pan-y select-none transition-transform duration-300 ease-out sm:p-3 md:p-4 lg:p-5"
             }
             style={{
               transform: `translateX(${swipeDeltaX}px) rotate(${swipeDeltaX * 0.06}deg)`

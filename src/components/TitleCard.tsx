@@ -29,7 +29,7 @@ export function TitleCard({
           compact
             ? "mx-auto grid w-full max-w-[170px] place-items-center overflow-hidden rounded-xl bg-zinc-800/70 text-3xl font-semibold aspect-[2/3]"
             : compactMobile
-              ? "mx-auto grid w-[min(38vw,8.75rem)] place-items-center overflow-hidden rounded-xl bg-zinc-800/70 text-2xl font-semibold aspect-[2/3] sm:w-[9.5rem] sm:text-3xl"
+              ? "mx-auto grid w-[min(38vw,8.75rem)] place-items-center overflow-hidden rounded-xl bg-zinc-800/70 text-2xl font-semibold aspect-[2/3] sm:w-[9.5rem] sm:text-3xl md:w-[12.5rem] md:rounded-2xl lg:w-[15rem] lg:text-4xl"
               : "mx-auto grid w-full max-w-[260px] place-items-center overflow-hidden rounded-xl bg-zinc-800/70 text-4xl font-semibold aspect-[2/3]"
         }
       >
@@ -45,37 +45,53 @@ export function TitleCard({
           <span>{title.name.slice(0, 1)}</span>
         )}
       </div>
-      <div className={compactMobile ? "mt-1.5 min-h-0" : "mt-3"}>
+      <div className={compactMobile ? "mt-1.5 min-h-0 md:mt-3" : "mt-3"}>
         <h3
           className={
             compactMobile
-              ? "line-clamp-2 text-sm font-medium leading-snug sm:text-base"
+              ? "line-clamp-2 text-sm font-medium leading-snug sm:text-base md:text-lg lg:text-xl"
               : "text-lg font-medium md:text-xl"
           }
         >
           {title.name} ({title.releaseYear})
         </h3>
-        <p className={compactMobile ? "mt-0.5 text-[11px] text-zinc-300 sm:text-sm" : "mt-2 text-sm text-zinc-300"}>
+        <p
+          className={
+            compactMobile
+              ? "mt-0.5 text-[11px] text-zinc-300 sm:text-sm md:mt-1.5 md:text-base"
+              : "mt-2 text-sm text-zinc-300"
+          }
+        >
           {title.type} - {title.runtimeMinutes}m
           {typeof title.rating === "number" ? ` - ${title.rating.toFixed(1)}★` : ""}
         </p>
         <p
           className={
             compactMobile
-              ? `mt-0.5 text-xs leading-snug text-zinc-100 sm:text-sm ${truncateOverview ? "" : ""}`
+              ? `mt-0.5 text-xs leading-snug text-zinc-100 sm:text-sm md:mt-2 md:text-base md:leading-relaxed lg:line-clamp-5 ${truncateOverview ? "line-clamp-3 md:line-clamp-4" : ""}`
               : `mt-2 text-zinc-100 ${truncateOverview ? "line-clamp-3" : ""}`
           }
         >
           {title.overview}
         </p>
-        {!compactMobile && title.genres.length ? (
-          <p className="mt-2 text-sm text-zinc-300">Genres: {title.genres.join(", ")}</p>
+        {title.genres.length ? (
+          <p className={compactMobile ? "mt-1 hidden text-sm text-zinc-300 md:block" : "mt-2 text-sm text-zinc-300"}>
+            Genres: {title.genres.join(", ")}
+          </p>
         ) : null}
-        {!compactMobile && title.providers.length ? (
-          <p className="mt-1 text-sm text-zinc-300">Streaming: {formatProviderLabels(title.providers)}</p>
+        {title.providers.length ? (
+          <p
+            className={
+              compactMobile ? "mt-1 hidden text-sm text-zinc-300 md:block" : "mt-1 text-sm text-zinc-300"
+            }
+          >
+            Streaming: {formatProviderLabels(title.providers)}
+          </p>
         ) : null}
-        {!compactMobile && title.cast?.length ? (
-          <p className="mt-1 text-sm text-zinc-300">Cast: {title.cast.join(", ")}</p>
+        {title.cast?.length ? (
+          <p className={compactMobile ? "mt-1 hidden text-sm text-zinc-300 lg:block" : "mt-1 text-sm text-zinc-300"}>
+            Cast: {title.cast.join(", ")}
+          </p>
         ) : null}
       </div>
     </article>

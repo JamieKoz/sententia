@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { WATCH_REGION_OPTIONS } from "../config/regions";
 import { formatViewerRegionHint } from "../services/viewerPrefs";
 import type { ViewerPrefs } from "../types";
@@ -24,6 +24,32 @@ export function SettingsMenu({
   watchedCount?: number;
   accountSection?: ReactNode;
 }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
   function handleResetAllData() {
     if (typeof window === "undefined") {
       onClearCache();
@@ -38,14 +64,21 @@ export function SettingsMenu({
   }
 
   return (
-    <details className="group relative ml-auto">
-      <summary className="summary-no-marker list-none cursor-pointer rounded-full border border-white/30 bg-zinc-900/60 p-2 text-sm text-zinc-100 backdrop-blur-md transition hover:border-white/50 hover:bg-zinc-800/70 active:scale-90">
+    <div ref={rootRef} className="relative ml-auto">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className="rounded-full border border-white/30 bg-zinc-900/60 p-2 text-sm text-zinc-100 backdrop-blur-md transition hover:border-white/50 hover:bg-zinc-800/70 active:scale-90"
+        onClick={() => setOpen((current) => !current)}
+      >
         <span className="sr-only">Settings</span>
         <svg width="100%" height="100%" className="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M20 21C20 19.6044 20 18.9067 19.8278 18.3389C19.44 17.0605 18.4395 16.06 17.1611 15.6722C16.5933 15.5 15.8956 15.5 14.5 15.5H9.5C8.10444 15.5 7.40665 15.5 6.83886 15.6722C5.56045 16.06 4.56004 17.0605 4.17224 18.3389C4 18.9067 4 19.6044 4 21M16.5 7.5C16.5 9.98528 14.4853 12 12 12C9.51472 12 7.5 9.98528 7.5 7.5C7.5 5.01472 9.51472 3 12 3C14.4853 3 16.5 5.01472 16.5 7.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-      </summary>
-      <div className="absolute right-0 z-30 mt-2 w-56 rounded-xl border border-white/20 bg-zinc-900/90 p-3 shadow-2xl backdrop-blur-xl">
+      </button>
+      {open ? (
+      <div className="absolute right-0 z-30 mt-2 w-56 rounded-xl border border-white/20 bg-zinc-900/90 p-3 shadow-2xl backdrop-blur-xl" role="menu">
         {accountSection}
         {onToggleTasteProfile || onToggleLibrary || onToggleHistory ? (
           <div className="">
@@ -55,7 +88,10 @@ export function SettingsMenu({
                 <button
                   type="button"
                   className="w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-100 transition hover:bg-zinc-800/80 active:bg-zinc-800/90"
-                  onClick={onToggleTasteProfile}
+                  onClick={() => {
+                    onToggleTasteProfile();
+                    setOpen(false);
+                  }}
                 >
                   Taste profile
                 </button>
@@ -64,7 +100,10 @@ export function SettingsMenu({
                 <button
                   type="button"
                   className="w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-100 transition hover:bg-zinc-800/80 active:bg-zinc-800/90"
-                  onClick={onToggleLibrary}
+                  onClick={() => {
+                    onToggleLibrary();
+                    setOpen(false);
+                  }}
                 >
                   Library ({savedCount ?? 0} saved / {watchedCount ?? 0} seen)
                 </button>
@@ -73,7 +112,10 @@ export function SettingsMenu({
                 <button
                   type="button"
                   className="w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-100 transition hover:bg-zinc-800/80 active:bg-zinc-800/90"
-                  onClick={onToggleHistory}
+                  onClick={() => {
+                    onToggleHistory();
+                    setOpen(false);
+                  }}
                 >
                   History
                 </button>
@@ -107,6 +149,7 @@ export function SettingsMenu({
           Reset all data
         </button>
       </div>
-    </details>
+      ) : null}
+    </div>
   );
 }
